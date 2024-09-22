@@ -1,3 +1,4 @@
+// src/navigation/AppNavigation.js
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -5,23 +6,20 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
 // Import screen components
-import LoginScreen from './src/screens/LoginScreen';
-import HomeScreen from './src/screens/HomeScreen';
-import BookingScreen from './src/screens/BookingScreen';
-import CalendarScreen from './src/screens/CalendarScreen';
-import HistoryScreen from './src/screens/HistoryScreen';
-import ReportsScreen from './src/screens/ReportsScreen'; // New Reports Screen
+import LoginScreen from '../screens/LoginScreen';
+import HomeScreen from '../screens/HomeScreen';
+import BookingScreen from '../screens/BookingScreen';
+import CalendarScreen from '../screens/CalendarScreen';
+import HistoryScreen from '../screens/HistoryScreen';
+import ReportsScreen from '../screens/ReportsScreen'; // Import the Reports screen
 
-// Import the HistoryContext
-import { HistoryProvider } from './src/context/HistoryContext';
-
-// Create Stack Navigator for the application flow
+// Create Stack Navigator
 const Stack = createStackNavigator();
 
-// Create Bottom Tab Navigator for the main app screens
+// Create Bottom Tab Navigator
 const Tab = createBottomTabNavigator();
 
-// Main Tab Navigator for the App Screens
+// Bottom Tab Navigator Component
 const MainTabs = () => {
   return (
     <Tab.Navigator
@@ -42,8 +40,8 @@ const MainTabs = () => {
             case 'History':
               iconName = 'time';
               break;
-            case 'Reports': // New Reports Tab
-              iconName = 'bar-chart-outline';
+            case 'Reports': // Updated to Reports
+              iconName = 'bar-chart-outline'; // Use an appropriate icon for reports
               break;
             default:
               iconName = 'home';
@@ -73,28 +71,14 @@ const MainTabs = () => {
   );
 };
 
-// Main App Component
-const App = () => {
+// Main App Navigation Component
+export default function AppNavigation() {
   return (
-    <HistoryProvider>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Login">
-          {/* Stack Screen for Login */}
-          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-          
-          {/* Stack Screen for the Main Tabs */}
-          <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
-
-          {/* Optionally, add Calendar screen as part of Stack for nested navigation */}
-          <Stack.Screen 
-            name="Calendar" 
-            component={CalendarScreen} 
-            options={{ title: 'Booking Calendar' }} 
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </HistoryProvider>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Main" component={MainTabs} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-};
-
-export default App;
+}

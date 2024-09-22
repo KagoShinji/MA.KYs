@@ -1,38 +1,58 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Import icons for use in the card
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }) => {
+  // Navigate to the respective screens
+  const navigateToScreen = (screenName) => {
+    navigation.navigate(screenName);
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.welcomeText}>Hello!</Text>
+      {/* Greeting Container */}
+      <View style={styles.greetingContainer}>
+        <Text style={styles.welcomeText}>Hello!</Text>
+      </View>
 
-      {/* Booking Section */}
-      <TouchableOpacity style={styles.sectionTouchable}>
-        <Text style={styles.sectionText}>Booking</Text>
-        <View style={styles.sectionBox}>
-          <Text style={styles.boxContent}>Booking Details</Text>
-        </View>
-      </TouchableOpacity>
+      {/* Main Navigation Boxes */}
+      <View style={styles.boxContainer}>
+        <TouchableOpacity
+          style={styles.box}
+          onPress={() => navigateToScreen('Booking')}
+        >
+          {/* Add an Icon and Text */}
+          <Ionicons name="book" size={24} color="#333" /> 
+          <Text style={styles.boxText}>Booking</Text>
+        </TouchableOpacity>
 
-      {/* History Section */}
-      <TouchableOpacity style={styles.sectionTouchable}>
-        <Text style={styles.sectionText}>History</Text>
-        <View style={styles.sectionBox}>
-          <Text style={styles.boxContent}>History Details</Text>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.box}
+          onPress={() => navigateToScreen('Calendar')}
+        >
+          {/* Add an Icon and Text */}
+          <Ionicons name="calendar" size={24} color="#333" /> 
+          <Text style={styles.boxText}>Calendar</Text>
+        </TouchableOpacity>
 
-      {/* Archives Section */}
-      <TouchableOpacity style={styles.sectionTouchable}>
-        <Text style={styles.sectionText}>Archives</Text>
-        <View style={styles.sectionBox}>
-          <Text style={styles.boxContent}>Archive Details</Text>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.box}
+          onPress={() => navigateToScreen('History')}
+        >
+          {/* Add an Icon and Text */}
+          <Ionicons name="time" size={24} color="#333" /> 
+          <Text style={styles.boxText}>History</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Log Out</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.box}
+          onPress={() => navigateToScreen('Reports')}
+        >
+          {/* Add an Icon and Text */}
+          <Ionicons name="bar-chart" size={24} color="#333" /> 
+          <Text style={styles.boxText}>Reports</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -45,52 +65,47 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     padding: 15,
   },
-  welcomeText: {
-    fontSize: 50,
-    fontWeight: 'bold',
-    alignSelf: 'flex-start',
-    marginLeft: 20,
-    marginTop: -20,
-    marginBottom: 10,
-  },
-  sectionTouchable: {
+  greetingContainer: {
     width: '100%',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
     marginBottom: 20,
   },
-  sectionText: {
-    fontSize: 16,
+  welcomeText: {
+    fontSize: 40,
     fontWeight: 'bold',
-    alignSelf: 'flex-start',
-    marginLeft: 20,
-    marginBottom: 10,
     color: '#000',
   },
-  sectionBox: {
+  // Container for the 4 navigation boxes
+  boxContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap', // Allow wrapping to the next line
+    justifyContent: 'center', // Center boxes horizontally
+    alignItems: 'center', // Center boxes vertically
     width: '100%',
-    height: 125,
-    borderWidth: 2,
-    borderColor: '#000',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f8f8',
+    marginTop: 30,
   },
-  boxContent: {
-    fontSize: 14,
-    color: '#000',
+  // Style for individual boxes
+  box: {
+    width: '40%', // Box width
+    height: 100, // Box height
+    backgroundColor: '#f0f0f0', // Box background color
+    justifyContent: 'center', // Center text horizontally
+    alignItems: 'center', // Center text vertically
+    margin: 10, // Margin between boxes
+    borderRadius: 10, // Rounded corners
+    elevation: 3, // Shadow for Android
+    shadowColor: '#000', // Shadow color for iOS
+    shadowOffset: { width: 0, height: 2 }, // Shadow offset for iOS
+    shadowOpacity: 0.3, // Shadow opacity for iOS
+    shadowRadius: 5, // Shadow radius for iOS
   },
-  button: {
-    height: 45,
-    width: '40%',
-    backgroundColor: '#000',
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    
-  },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 16,
+  // Text inside the box
+  boxText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 5, // Space between icon and text
   },
 });
 
