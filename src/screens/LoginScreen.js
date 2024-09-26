@@ -1,11 +1,8 @@
-// src/screens/LoginScreen.js
-
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, Image, Alert, Dimensions } from 'react-native';
+import { View, StyleSheet, Image, Alert } from 'react-native';
+import { TextInput, Button, Text, HelperText } from 'react-native-paper'; // Import from react-native-paper
 import { auth } from '../firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-
-const { width } = Dimensions.get('window'); // Get screen width
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
@@ -44,38 +41,69 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Foreground Content */}
+      {/* Logo and Title */}
       <View style={styles.logoContainer}>
         <Image
           source={require('../../assets/logo.png')}
           style={styles.logo}
         />
+        <Text style={styles.title}>WELCOME!</Text>
       </View>
-      <Text style={styles.title}>WELCOME!</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#888"
-        value={username}
-        onChangeText={setUsername}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#888"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry={true}
-      />
+
+      {/* Email Input */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          label="Email"
+          mode="outlined"
+          value={username}
+          onChangeText={setUsername}
+          style={styles.input}
+          theme={{ colors: { primary: '#000' } }} // Primary color for outline
+        />
+      </View>
+
+      {/* Password Input */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          label="Password"
+          mode="outlined"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+          theme={{ colors: { primary: '#000' } }}
+        />
+      </View>
+
+      {/* Error Message */}
       {errorMessage ? (
-        <Text style={styles.errorMessage}>{errorMessage}</Text>
+        <HelperText type="error" visible={true} style={styles.errorMessage}>
+          {errorMessage}
+        </HelperText>
       ) : null}
-      <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
-        <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Sign In</Text>
-      </TouchableOpacity>
+
+      {/* Forgot Password Link */}
+      <Button
+        mode="text"
+        onPress={handleForgotPassword}
+        style={styles.forgotPasswordButton}
+        labelStyle={styles.forgotPasswordText}
+      >
+        Forgot password?
+      </Button>
+
+      {/* Sign In Button */}
+      <View style={styles.buttonContainer}>
+        <Button
+          mode="contained"
+          onPress={handleLogin}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
+        >
+          Sign In
+        </Button>
+      </View>
     </View>
   );
 };
@@ -90,7 +118,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 30,
   },
   logo: {
     width: 125,
@@ -99,44 +127,27 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   title: {
-    fontSize: 45,
+    fontSize: 40,
     color: '#000',
     textAlign: 'center',
-    marginBottom: 20,
-    fontWeight: '500',
+    marginTop: 20,
+    fontWeight: 'bold',
     letterSpacing: 2,
   },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
   input: {
-    height: 45,
-    borderColor: '#000',
-    borderWidth: 1,
-    borderRadius: 30,
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    color: '#000',
-    width: '100%',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#fff', // White background for input fields
+    borderRadius: 25, // Rounded corners for input
+  },
+  errorMessage: {
     fontSize: 14,
-    fontWeight: '400',
+    textAlign: 'center',
+    marginBottom: 10,
   },
-  button: {
-    height: 45,
-    width: '50%',
-    backgroundColor: '#000',
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: 1,
-  },
-  forgotPassword: {
-    alignItems: 'center',
-    width: '100%',
+  forgotPasswordButton: {
     marginBottom: 20,
   },
   forgotPasswordText: {
@@ -144,11 +155,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textDecorationLine: 'underline',
   },
-  errorMessage: {
-    color: 'red',
-    fontSize: 12,
-    marginBottom: 10,
-    textAlign: 'center',
+  buttonContainer: {
+    width: '100%',
+  },
+  button: {
+    backgroundColor: '#000', // Black background for button
+    borderRadius: 25, // Rounded corners for button
+  },
+  buttonContent: {
+    height: 45,
+  },
+  buttonLabel: {
+    color: '#FFF',
+    fontSize: 16,
   },
 });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { db } from '../firebaseConfig';
@@ -7,9 +7,11 @@ import { ref, onValue, set, remove } from 'firebase/database';
 
 const BookingScreen = () => {
   const [bookings, setBookings] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [confirmationType, setConfirmationType] = useState(''); // 'completed' or 'cancelled'
   const navigation = useNavigation();
 
-  // Fetch bookings from Firebase Realtime Database
   useEffect(() => {
     const bookingsRef = ref(db, 'bookings');
 
@@ -27,7 +29,6 @@ const BookingScreen = () => {
     return () => unsubscribe();
   }, []);
 
-  // Function to transfer booking to history and remove from current bookings
   const transferBookingToHistory = (booking, status) => {
     if (!booking || !booking.id) {
       console.error("Invalid booking object or missing ID:", booking);
@@ -48,6 +49,7 @@ const BookingScreen = () => {
           remove(bookingRef)
             .then(() => {
               setBookings((prevBookings) => prevBookings.filter(b => b.id !== id));
+              setModalVisible(false); // Close the modal after transfer
             })
             .catch((error) => {
               console.error("Error removing booking from Firebase:", error);
@@ -61,43 +63,24 @@ const BookingScreen = () => {
     }
   };
 
-  // Confirmation and handling for check button (Completed)
-  const handleCheck = (booking) => {
-    Alert.alert(
-      "Confirm Check",
-      "Are you sure you want to mark this booking as completed and move it to the history?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Confirm",
-          onPress: () => transferBookingToHistory(booking, 'completed')
-        }
-      ]
-    );
+  const handleConfirm = () => {
+    if (selectedBooking && confirmationType) {
+      transferBookingToHistory(selectedBooking, confirmationType);
+    }
   };
 
-  // Confirmation and handling for cross button (Cancelled)
-  const handleCross = (booking) => {
-    Alert.alert(
-      "Confirm Remove",
-      "Are you sure you want to mark this booking as cancelled and move it to the history?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Confirm",
-          onPress: () => transferBookingToHistory(booking, 'cancelled')
-        }
-      ]
-    );
+  const openModal = (booking, type) => {
+    setSelectedBooking(booking);
+    setConfirmationType(type);
+    setModalVisible(true);
   };
 
-  // Function to format the date and time
+  const closeModal = () => {
+    setSelectedBooking(null);
+    setConfirmationType('');
+    setModalVisible(false);
+  };
+
   const formatDateTime = (date, time) => {
     const formattedDate = new Date(date).toLocaleDateString('en-US', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -125,11 +108,11 @@ const BookingScreen = () => {
                   </Text>
                 </View>
                 <View style={styles.iconContainer}>
-                  <TouchableOpacity onPress={() => handleCheck(booking)} style={styles.iconButton}>
-                    <Ionicons name="checkmark-circle" size={30} color="black" />
+                  <TouchableOpacity onPress={() => openModal(booking, 'completed')} style={styles.iconButton}>
+                    <Ionicons name="checkmark-circle" size={30} color="white" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleCross(booking)} style={styles.iconButton}>
-                    <Ionicons name="close-circle" size={30} color="black" />
+                  <TouchableOpacity onPress={() => openModal(booking, 'cancelled')} style={styles.iconButton}>
+                    <Ionicons name="close-circle" size={30} color="white" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -137,6 +120,31 @@ const BookingScreen = () => {
           ))}
         </ScrollView>
       </View>
+
+      {/* Confirmation Modal */}
+      <Modal
+        transparent={true}
+        visible={modalVisible}
+        animationType="slide"
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Confirm {confirmationType === 'completed' ? 'Completion' : 'Cancellation'}</Text>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to mark this booking as {confirmationType}?
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalButton} onPress={handleConfirm}>
+                <Text style={styles.modalButtonText}>Confirm</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={closeModal}>
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -146,19 +154,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 15,
+    backgroundColor: 'white',
+    padding: 20,
+    paddingTop: 50,
   },
   greetingContainer: {
     width: '100%',
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 20,
+    marginTop: 20,
   },
   welcomeText: {
-    fontSize: 40,
+    fontSize: 34,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#333',
+    textAlign: 'center',
   },
   sectionText: {
     fontSize: 18,
@@ -166,32 +177,37 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginLeft: 20,
     marginBottom: 10,
-    color: '#000',
+    color: '#333',
   },
   sectionBox: {
     width: '100%',
     flex: 1,
     borderWidth: 1,
-    borderColor: '#000',
-    borderRadius: 10,
+    borderColor: '#333',
+    borderRadius: 20,
     padding: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#f8f8f8',
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
   },
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 10,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    backgroundColor: 'black',
+    borderRadius: 20,
     padding: 15,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
   },
   cardContent: {
     flexDirection: 'row',
@@ -204,11 +220,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#FFF',
     marginBottom: 5,
   },
   cardDescription: {
     fontSize: 14,
-    color: '#777',
+    color: '#999',
     marginTop: 5,
   },
   iconContainer: {
@@ -216,6 +233,66 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     marginHorizontal: 5,
+    backgroundColor: '#333',
+    borderRadius: 20,
+    padding: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  // Modal styles
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    marginHorizontal: 5,
+    paddingVertical: 10,
+    backgroundColor: 'black',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: 'black',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

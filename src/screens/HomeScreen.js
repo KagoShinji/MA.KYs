@@ -1,58 +1,189 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Import icons for use in the card
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Modal, ScrollView } from 'react-native';
+import BookingsIcon from '../assets/icons/bookings.svg'; // Update the path as necessary
+import CalendarIcon from '../assets/icons/calendar.svg';
+import HistoryIcon from '../assets/icons/history.svg';
+import ReportsIcon from '../assets/icons/reports.svg';
+import moment from 'moment-timezone';
+import { db } from '../firebaseConfig';
+import { ref, onValue, query, orderByChild, equalTo } from 'firebase/database';
 
 const HomeScreen = ({ navigation }) => {
-  // Navigate to the respective screens
+  const [modalVisible, setModalVisible] = useState(false);
+  const [pendingBookings, setPendingBookings] = useState(0);
+  const [confirmedBookings, setConfirmedBookings] = useState(0);
+  const [cancelledBookings, setCancelledBookings] = useState(0);
+  const [bookingsToday, setBookingsToday] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const PHILIPPINE_TIMEZONE = 'Asia/Manila';
+
+  // Get current date in Philippine timezone using moment-timezone
+  const currentDate = moment.tz(new Date(), PHILIPPINE_TIMEZONE).format('YYYY-MM-DD');
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch Pending Bookings
+        const bookingsRef = ref(db, 'bookings');
+        onValue(bookingsRef, (snapshot) => {
+          const bookings = snapshot.val();
+          const pendingCount = bookings ? Object.keys(bookings).length : 0;
+          setPendingBookings(pendingCount);
+        });
+
+        // Fetch Confirmed Bookings
+        const historyRef = ref(db, 'history');
+        const confirmedQuery = query(historyRef, orderByChild('status'), equalTo('confirmed'));
+        onValue(confirmedQuery, (snapshot) => {
+          const confirmedBookingsList = snapshot.val();
+          const confirmedCount = confirmedBookingsList ? Object.keys(confirmedBookingsList).length : 0;
+          setConfirmedBookings(confirmedCount);
+        });
+
+        // Fetch Cancelled Bookings
+        const cancelledQuery = query(historyRef, orderByChild('status'), equalTo('cancelled'));
+        onValue(cancelledQuery, (snapshot) => {
+          const cancelledBookingsList = snapshot.val();
+          const cancelledCount = cancelledBookingsList ? Object.keys(cancelledBookingsList).length : 0;
+          setCancelledBookings(cancelledCount);
+        });
+
+        // Fetch Bookings for Today
+        const todayQuery = query(historyRef, orderByChild('date'), equalTo(currentDate));
+        onValue(todayQuery, (snapshot) => {
+          const bookings = snapshot.val();
+          const todayBookings = bookings ? Object.values(bookings) : [];
+          setBookingsToday(todayBookings);
+        });
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching bookings data: ", error);
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, [currentDate]);
+
   const navigateToScreen = (screenName) => {
     navigation.navigate(screenName);
   };
 
+  const animatedValue = new Animated.Value(1);
+
+  const handlePressIn = () => {
+    Animated.spring(animatedValue, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(animatedValue, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const animatedStyle = {
+    transform: [{ scale: animatedValue }],
+  };
+
   return (
     <View style={styles.container}>
-      {/* Greeting Container */}
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Home</Text>
+      </View>
+
+      {/* Greeting and Sub Text */}
       <View style={styles.greetingContainer}>
-        <Text style={styles.welcomeText}>Hello!</Text>
+        <Text style={styles.welcomeText}>Welcome!</Text>
+        <Text style={styles.subText}>What would you like to do today?</Text>
       </View>
 
-      {/* Main Navigation Boxes */}
+      {/* Today's Date and Bookings Card */}
+      <View style={styles.dateCardContainer}>
+        <TouchableOpacity style={styles.dateCard} onPress={() => setModalVisible(true)}>
+          <Text style={styles.dateText}>{moment.tz(new Date(), PHILIPPINE_TIMEZONE).format('MMMM D, YYYY')}</Text>
+          {loading ? (
+            <Text style={styles.bookingTodayText}>Loading...</Text>
+          ) : (
+            <Text style={styles.bookingTodayText}>{`Bookings for today: ${bookingsToday.length}`}</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Booking Status Cards */}
+      <View style={styles.statusContainer}>
+        <View style={styles.statusCard}>
+          <Text style={styles.statusTitle}>Pending Bookings</Text>
+          <Text style={styles.statusCount}>{pendingBookings}</Text>
+        </View>
+        <View style={styles.statusCard}>
+          <Text style={styles.statusTitle}>Confirmed Bookings</Text>
+          <Text style={styles.statusCount}>{confirmedBookings}</Text>
+        </View>
+        <View style={styles.statusCard}>
+          <Text style={styles.statusTitle}>Cancelled Bookings</Text>
+          <Text style={styles.statusCount}>{cancelledBookings}</Text>
+        </View>
+      </View>
+
+      {/* Actions Section */}
+      <Text style={styles.sectionTitle}>Actions</Text>
       <View style={styles.boxContainer}>
-        <TouchableOpacity
-          style={styles.box}
-          onPress={() => navigateToScreen('Booking')}
-        >
-          {/* Add an Icon and Text */}
-          <Ionicons name="book" size={24} color="#333" /> 
-          <Text style={styles.boxText}>Booking</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.box}
-          onPress={() => navigateToScreen('Calendar')}
-        >
-          {/* Add an Icon and Text */}
-          <Ionicons name="calendar" size={24} color="#333" /> 
-          <Text style={styles.boxText}>Calendar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.box}
-          onPress={() => navigateToScreen('History')}
-        >
-          {/* Add an Icon and Text */}
-          <Ionicons name="time" size={24} color="#333" /> 
-          <Text style={styles.boxText}>History</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.box}
-          onPress={() => navigateToScreen('Reports')}
-        >
-          {/* Add an Icon and Text */}
-          <Ionicons name="bar-chart" size={24} color="#333" /> 
-          <Text style={styles.boxText}>Reports</Text>
-        </TouchableOpacity>
+        {[
+          { name: 'Booking', icon: BookingsIcon, screen: 'Booking' },
+          { name: 'Calendar', icon: CalendarIcon, screen: 'Calendar' },
+          { name: 'History', icon: HistoryIcon, screen: 'History' },
+          { name: 'Reports', icon: ReportsIcon, screen: 'Reports' },
+        ].map((item) => (
+          <TouchableOpacity
+            style={[styles.box, animatedStyle]}
+            key={item.name}
+            onPress={() => navigateToScreen(item.screen)}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            activeOpacity={0.8}
+          >
+            <View style={styles.innerBox}>
+              <item.icon width={25} height={25} style={styles.boxIcon} />
+              <Text style={styles.boxText}>{item.name}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
       </View>
+
+      {/* Modal for Today's Bookings */}
+      <Modal visible={modalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Today's Bookings</Text>
+            <ScrollView style={styles.modalScroll}>
+              {bookingsToday.length === 0 ? (
+                <Text style={styles.modalBooking}>No bookings for today</Text>
+              ) : (
+                bookingsToday.map((booking, index) => (
+                  <Text style={styles.modalBooking} key={index}>
+                    {`${booking.first_name} ${booking.last_name} - ${booking.time}`}
+                  </Text>
+                ))
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.modalCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -60,52 +191,168 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
     backgroundColor: '#FFF',
-    padding: 15,
+    padding: 20,
+  },
+  header: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#6200EE',
   },
   greetingContainer: {
     width: '100%',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
     marginBottom: 20,
   },
   welcomeText: {
-    fontSize: 40,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#333',
   },
-  // Container for the 4 navigation boxes
-  boxContainer: {
+  subText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 5,
+  },
+  dateCardContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  dateCard: {
+    width: '90%',
+    padding: 20,
+    backgroundColor: '#6200EE',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  dateText: {
+    fontSize: 18,
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+  bookingTodayText: {
+    fontSize: 16,
+    color: '#FFF',
+    marginTop: 5,
+  },
+  statusContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap', // Allow wrapping to the next line
-    justifyContent: 'center', // Center boxes horizontally
-    alignItems: 'center', // Center boxes vertically
-    width: '100%',
-    marginTop: 30,
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
-  // Style for individual boxes
-  box: {
-    width: '40%', // Box width
-    height: 100, // Box height
-    backgroundColor: '#f0f0f0', // Box background color
-    justifyContent: 'center', // Center text horizontally
-    alignItems: 'center', // Center text vertically
-    margin: 10, // Margin between boxes
-    borderRadius: 10, // Rounded corners
-    elevation: 3, // Shadow for Android
-    shadowColor: '#000', // Shadow color for iOS
-    shadowOffset: { width: 0, height: 2 }, // Shadow offset for iOS
-    shadowOpacity: 0.3, // Shadow opacity for iOS
-    shadowRadius: 5, // Shadow radius for iOS
+  statusCard: {
+    flex: 1,
+    padding: 5,
+    margin: 5,
+    backgroundColor: '#FFF',
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
   },
-  // Text inside the box
-  boxText: {
+  statusTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  statusCount: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#6200EE',
+    marginTop: 5,
+  },
+  sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginTop: 5, // Space between icon and text
+    marginBottom: 15,
+  },
+  boxContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  box: {
+    width: '45%',
+    height: 100,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 10,
+    borderRadius: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  innerBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  boxIcon: {
+    marginRight: 10,
+  },
+  boxText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#6200EE',
+  },
+  modalScroll: {
+    marginBottom: 20,
+  },
+  modalBooking: {
+    fontSize: 16,
+    color: '#333',
+    marginVertical: 10,
+  },
+  modalCloseButton: {
+    backgroundColor: '#6200EE',
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 16,
+    color: '#FFF',
   },
 });
 

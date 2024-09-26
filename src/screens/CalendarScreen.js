@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons'; // Import Ionicons for icons
 
 const CalendarScreen = () => {
   const [calendarBookings, setCalendarBookings] = useState({});
+  const [completedBookings, setCompletedBookings] = useState({});
   const [selectedDateBookings, setSelectedDateBookings] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [noHistoryData, setNoHistoryData] = useState(false);
@@ -23,13 +24,15 @@ const CalendarScreen = () => {
         if (data) {
           setNoHistoryData(false); // Reset no data state
           const formattedBookings = {};
+          const completedBookingsList = {};
           Object.keys(data).forEach((key) => {
             const booking = data[key];
 
-            // Only process bookings that are not cancelled
-            if (booking.status !== 'cancelled') {
+            // Only process bookings that are completed
+            if (booking.status === 'completed') {
               const bookingDate = booking.date;
 
+              // Group bookings for the calendar view
               if (formattedBookings[bookingDate]) {
                 formattedBookings[bookingDate].dots.push({
                   key,
@@ -44,14 +47,23 @@ const CalendarScreen = () => {
                   marked: true
                 };
               }
+
+              // Group bookings for the completed bookings list
+              if (completedBookingsList[bookingDate]) {
+                completedBookingsList[bookingDate].push(booking);
+              } else {
+                completedBookingsList[bookingDate] = [booking];
+              }
             }
           });
 
           setCalendarBookings(formattedBookings);
+          setCompletedBookings(completedBookingsList);
         } else {
           // If no data is available in the history node
           setNoHistoryData(true);
           setCalendarBookings({});
+          setCompletedBookings({});
         }
       },
       (error) => {
@@ -139,6 +151,29 @@ const CalendarScreen = () => {
             style={styles.calendar}
           />
 
+          {/* List of completed bookings organized by date */}
+          <ScrollView style={styles.bookingsContainer}>
+            {Object.keys(completedBookings).length > 0 ? (
+              Object.keys(completedBookings).map((date) => (
+                <View key={date} style={styles.bookingSection}>
+                  <Text style={styles.bookingDate}>{date}</Text>
+                  {completedBookings[date].map((booking, index) => (
+                    <View key={index} style={styles.bookingItem}>
+                      <Text style={styles.bookingText}>
+                        <Ionicons name="person-circle-outline" size={16} color="#000" /> {booking.first_name} {booking.last_name}
+                      </Text>
+                      <Text style={styles.bookingText}><Ionicons name="cube-outline" size={16} color="#000" /> Package: {booking.package}</Text>
+                      <Text style={styles.bookingText}><Ionicons name="calendar-outline" size={16} color="#000" /> Date: {booking.date}</Text>
+                      <Text style={styles.bookingText}><Ionicons name="time-outline" size={16} color="#000" /> Time: {booking.time}</Text>
+                    </View>
+                  ))}
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noDataText}>No completed bookings available.</Text>
+            )}
+          </ScrollView>
+
           {/* Modal for displaying bookings */}
           <Modal
             transparent={true}
@@ -195,15 +230,44 @@ const styles = StyleSheet.create({
     width: Dimensions.get('window').width - 20,
     height: '100%',
   },
+  bookingsContainer: {
+    width: '90%',
+    marginTop: 20,
+  },
+  bookingSection: {
+    marginBottom: 20,
+  },
+  bookingDate: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 10,
+  },
+  bookingItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  bookingText: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: '#000',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#aaa',
+    textAlign: 'center',
+    marginTop: 10,
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.8)', // Darker overlay
+    backgroundColor: 'rgba(0,0,0,0.8)',
   },
   modalContent: {
     width: '80%',
-    backgroundColor: 'white', // Black background for modal
+    backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
@@ -212,38 +276,22 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: 'black', // White text for title
+    color: '#000',
     marginBottom: 10,
   },
   bookingList: {
     width: '100%',
     marginBottom: 20,
   },
-  bookingItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#555', // Gray border for items
-  },
-  bookingText: {
-    fontSize: 16,
-    marginBottom: 5,
-    color: 'black', // White text for booking details,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#aaa', // Light gray for empty message
-    textAlign: 'center',
-    marginTop: 10,
-  },
   closeButton: {
     width: '100%',
     padding: 10,
-    backgroundColor: 'black', // White button background
+    backgroundColor: 'black',
     borderRadius: 5,
     alignItems: 'center',
   },
   closeButtonText: {
-    color: 'white', // Black text for button
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },

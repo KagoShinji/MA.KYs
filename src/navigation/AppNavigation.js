@@ -2,8 +2,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { BottomNavigation } from 'react-native-paper';
 
 // Import screen components
 import LoginScreen from '../screens/LoginScreen';
@@ -13,61 +12,87 @@ import CalendarScreen from '../screens/CalendarScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ReportsScreen from '../screens/ReportsScreen'; // Import the Reports screen
 
-// Create Stack Navigator
-const Stack = createStackNavigator();
+// Create Stack Navigator for each tab
+const HomeStack = createStackNavigator();
+const BookingStack = createStackNavigator();
+const CalendarStack = createStackNavigator();
+const HistoryStack = createStackNavigator();
+const ReportsStack = createStackNavigator();
 
-// Create Bottom Tab Navigator
-const Tab = createBottomTabNavigator();
+// Define stacks for each tab
+const HomeStackScreen = () => (
+  <HomeStack.Navigator screenOptions={{ headerShown: false }}> {/* Hide header for all screens in HomeStack */}
+    <HomeStack.Screen 
+      name="Home" 
+      component={HomeScreen} 
+    />
+  </HomeStack.Navigator>
+);
 
-// Bottom Tab Navigator Component
+const BookingStackScreen = () => (
+  <BookingStack.Navigator screenOptions={{ headerShown: false }}> {/* Hide header for all screens in BookingStack */}
+    <BookingStack.Screen 
+      name="Booking" 
+      component={BookingScreen} 
+    />
+  </BookingStack.Navigator>
+);
+
+const CalendarStackScreen = () => (
+  <CalendarStack.Navigator screenOptions={{ headerShown: false }}> {/* Hide header for all screens in CalendarStack */}
+    <CalendarStack.Screen 
+      name="Calendar" 
+      component={CalendarScreen} 
+    />
+  </CalendarStack.Navigator>
+);
+
+const HistoryStackScreen = () => (
+  <HistoryStack.Navigator screenOptions={{ headerShown: false }}> {/* Hide header for all screens in HistoryStack */}
+    <HistoryStack.Screen 
+      name="History" 
+      component={HistoryScreen} 
+    />
+  </HistoryStack.Navigator>
+);
+
+const ReportsStackScreen = () => (
+  <ReportsStack.Navigator screenOptions={{ headerShown: false }}> {/* Hide header for all screens in ReportsStack */}
+    <ReportsStack.Screen 
+      name="Reports" 
+      component={ReportsScreen} 
+    />
+  </ReportsStack.Navigator>
+);
+
+// Bottom Navigation Component using React Native Paper
 const MainTabs = () => {
+  const [index, setIndex] = React.useState(0);
+  const [routes] = React.useState([
+    { key: 'home', title: 'Home', icon: 'home' },
+    { key: 'booking', title: 'Booking', icon: 'calendar' },
+    { key: 'calendar', title: 'Calendar', icon: 'calendar-outline' },
+    { key: 'history', title: 'History', icon: 'history' },
+    { key: 'reports', title: 'Reports', icon: 'chart-bar' },
+  ]);
+
+  const renderScene = BottomNavigation.SceneMap({
+    home: HomeStackScreen,
+    booking: BookingStackScreen,
+    calendar: CalendarStackScreen,
+    history: HistoryStackScreen,
+    reports: ReportsStackScreen,
+  });
+
   return (
-    <Tab.Navigator
-      initialRouteName="Home"
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ color, size }) => {
-          let iconName;
-          switch (route.name) {
-            case 'Home':
-              iconName = 'home';
-              break;
-            case 'Booking':
-              iconName = 'calendar';
-              break;
-            case 'Calendar':
-              iconName = 'calendar-outline';
-              break;
-            case 'History':
-              iconName = 'time';
-              break;
-            case 'Reports': // Updated to Reports
-              iconName = 'bar-chart-outline'; // Use an appropriate icon for reports
-              break;
-            default:
-              iconName = 'home';
-          }
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: 'white',
-        tabBarInactiveTintColor: 'gray',
-        tabBarStyle: {
-          backgroundColor: 'black',
-          borderTopWidth: 0,
-          height: 60,
-          paddingBottom: 5,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: 'bold',
-        },
-      })}
-    >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Home' }} />
-      <Tab.Screen name="Booking" component={BookingScreen} options={{ tabBarLabel: 'Booking' }} />
-      <Tab.Screen name="Calendar" component={CalendarScreen} options={{ tabBarLabel: 'Calendar' }} />
-      <Tab.Screen name="History" component={HistoryScreen} options={{ tabBarLabel: 'History' }} />
-      <Tab.Screen name="Reports" component={ReportsScreen} options={{ tabBarLabel: 'Reports' }} />
-    </Tab.Navigator>
+    <BottomNavigation
+      navigationState={{ index, routes }}
+      onIndexChange={setIndex}
+      renderScene={renderScene}
+      barStyle={{ backgroundColor: 'black' }} // Customize the bar style here
+      activeColor="white"
+      inactiveColor="gray"
+    />
   );
 };
 
@@ -75,7 +100,7 @@ const MainTabs = () => {
 export default function AppNavigation() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}> {/* Hide header for stack */}
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Main" component={MainTabs} />
       </Stack.Navigator>
