@@ -90,9 +90,15 @@ const BookingScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.greetingContainer}>
-        <Text style={styles.welcomeText}>Hello!</Text>
+      {/* Header */}
+      <View style={styles.fixedHeader}>
+        <Text style={styles.headerText}>Bookings</Text>
+        <View style={styles.greetingContainer}>
+          <Text style={styles.welcomeText}>Welcome!</Text>
+          <Text style={styles.subText}>What would you like to do today?</Text>
+        </View>
       </View>
+      
       <Text style={styles.sectionText}>Bookings</Text>
 
       <View style={styles.sectionBox}>
@@ -158,26 +164,48 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 50,
   },
-  greetingContainer: {
+  fixedHeader: {
     width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 20,
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    top: 10,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    padding: 20,
+    borderBottomColor: 'black',
+    alignItems: 'flex-start', // Align content to the left
+  },
+  headerText: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: 'black',
+    textAlign: 'left', // Align text to the left
+  },
+  greetingContainer: {
+    alignItems: 'flex-start', // Align container content to the left
+    marginTop: 10,
   },
   welcomeText: {
-    fontSize: 34,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
+    color: 'black',
+    textAlign: 'left', // Align text to the left
+  },
+  subText: {
+    fontSize: 16,
+    color: 'black',
+    marginTop: 5,
+    textAlign: 'left', // Align text to the left
   },
   sectionText: {
     fontSize: 18,
     fontWeight: 'bold',
-    alignSelf: 'flex-start',
-    marginLeft: 20,
-    marginBottom: 10,
     color: '#333',
+    marginBottom: 15,
+    marginTop: 150, // Adjusted margin to accommodate the fixed header
+    width: '100%',
+    textAlign: 'left',
   },
   sectionBox: {
     width: '100%',
@@ -199,7 +227,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   card: {
-    backgroundColor: 'black',
+    backgroundColor: 'white',
     borderRadius: 20,
     padding: 15,
     marginBottom: 20,
@@ -220,12 +248,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: 'black',
     marginBottom: 5,
   },
   cardDescription: {
     fontSize: 14,
-    color: '#999',
+    color: 'black',
     marginTop: 5,
   },
   iconContainer: {
@@ -235,7 +263,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     backgroundColor: '#333',
     borderRadius: 20,
-    padding: 5,
+    padding: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

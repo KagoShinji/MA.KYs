@@ -96,94 +96,95 @@ const HomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={styles.fixedHeader}>
         <Text style={styles.headerText}>Home</Text>
-      </View>
-
-      {/* Greeting and Sub Text */}
-      <View style={styles.greetingContainer}>
-        <Text style={styles.welcomeText}>Welcome!</Text>
-        <Text style={styles.subText}>What would you like to do today?</Text>
-      </View>
-
-      {/* Today's Date and Bookings Card */}
-      <View style={styles.dateCardContainer}>
-        <TouchableOpacity style={styles.dateCard} onPress={() => setModalVisible(true)}>
-          <Text style={styles.dateText}>{moment.tz(new Date(), PHILIPPINE_TIMEZONE).format('MMMM D, YYYY')}</Text>
-          {loading ? (
-            <Text style={styles.bookingTodayText}>Loading...</Text>
-          ) : (
-            <Text style={styles.bookingTodayText}>{`Bookings for today: ${bookingsToday.length}`}</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {/* Booking Status Cards */}
-      <View style={styles.statusContainer}>
-        <View style={styles.statusCard}>
-          <Text style={styles.statusTitle}>Pending Bookings</Text>
-          <Text style={styles.statusCount}>{pendingBookings}</Text>
-        </View>
-        <View style={styles.statusCard}>
-          <Text style={styles.statusTitle}>Confirmed Bookings</Text>
-          <Text style={styles.statusCount}>{confirmedBookings}</Text>
-        </View>
-        <View style={styles.statusCard}>
-          <Text style={styles.statusTitle}>Cancelled Bookings</Text>
-          <Text style={styles.statusCount}>{cancelledBookings}</Text>
+        <View style={styles.greetingContainer}>
+          <Text style={styles.welcomeText}>Welcome!</Text>
+          <Text style={styles.subText}>What would you like to do today?</Text>
         </View>
       </View>
 
-      {/* Actions Section */}
-      <Text style={styles.sectionTitle}>Actions</Text>
-      <View style={styles.boxContainer}>
-        {[
-          { name: 'Booking', icon: BookingsIcon, screen: 'Booking' },
-          { name: 'Calendar', icon: CalendarIcon, screen: 'Calendar' },
-          { name: 'History', icon: HistoryIcon, screen: 'History' },
-          { name: 'Reports', icon: ReportsIcon, screen: 'Reports' },
-        ].map((item) => (
-          <TouchableOpacity
-            style={[styles.box, animatedStyle]}
-            key={item.name}
-            onPress={() => navigateToScreen(item.screen)}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            activeOpacity={0.8}
-          >
-            <View style={styles.innerBox}>
-              <item.icon width={25} height={25} style={styles.boxIcon} />
-              <Text style={styles.boxText}>{item.name}</Text>
-            </View>
+      {/* Content */}
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        {/* Today's Date and Bookings Card */}
+        <View style={styles.dateCardContainer}>
+          <TouchableOpacity style={styles.dateCard} onPress={() => setModalVisible(true)}>
+            <Text style={styles.dateText}>{moment.tz(new Date(), PHILIPPINE_TIMEZONE).format('MMMM D, YYYY')}</Text>
+            {loading ? (
+              <Text style={styles.bookingTodayText}>Loading...</Text>
+            ) : (
+              <Text style={styles.bookingTodayText}>{`Bookings for today: ${bookingsToday.length}`}</Text>
+            )}
           </TouchableOpacity>
-        ))}
-      </View>
+        </View>
 
-      {/* Modal for Today's Bookings */}
-      <Modal visible={modalVisible} transparent={true} animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Today's Bookings</Text>
-            <ScrollView style={styles.modalScroll}>
-              {bookingsToday.length === 0 ? (
-                <Text style={styles.modalBooking}>No bookings for today</Text>
-              ) : (
-                bookingsToday.map((booking, index) => (
-                  <Text style={styles.modalBooking} key={index}>
-                    {`${booking.first_name} ${booking.last_name} - ${booking.time}`}
-                  </Text>
-                ))
-              )}
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.modalCloseText}>Close</Text>
-            </TouchableOpacity>
+        {/* Booking Status Cards */}
+        <View style={styles.statusContainer}>
+          <View style={styles.statusCard}>
+            <Text style={styles.statusTitle}>Pending Bookings</Text>
+            <Text style={styles.statusCount}>{pendingBookings}</Text>
+          </View>
+          <View style={styles.statusCard}>
+            <Text style={styles.statusTitle}>Confirmed Bookings</Text>
+            <Text style={styles.statusCount}>{confirmedBookings}</Text>
+          </View>
+          <View style={styles.statusCard}>
+            <Text style={styles.statusTitle}>Cancelled Bookings</Text>
+            <Text style={styles.statusCount}>{cancelledBookings}</Text>
           </View>
         </View>
-      </Modal>
+
+        {/* Actions Section */}
+        <Text style={styles.sectionTitle}>Actions</Text>
+        <View style={styles.boxContainer}>
+          {[
+            { name: 'Booking', icon: BookingsIcon, screen: 'Booking' },
+            { name: 'Calendar', icon: CalendarIcon, screen: 'Calendar' },
+            { name: 'History', icon: HistoryIcon, screen: 'History' },
+            { name: 'Reports', icon: ReportsIcon, screen: 'Reports' },
+          ].map((item) => (
+            <TouchableOpacity
+              style={[styles.box, animatedStyle]}
+              key={item.name}
+              onPress={() => navigateToScreen(item.screen)}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              activeOpacity={0.8}
+            >
+              <View style={styles.innerBox}>
+                <item.icon width={25} height={25} style={styles.boxIcon} />
+                <Text style={styles.boxText}>{item.name}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Modal for Today's Bookings */}
+        <Modal visible={modalVisible} transparent={true} animationType="slide">
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Today's Bookings</Text>
+              <ScrollView style={styles.modalScroll}>
+                {bookingsToday.length === 0 ? (
+                  <Text style={styles.modalBooking}>No bookings for today</Text>
+                ) : (
+                  bookingsToday.map((booking, index) => (
+                    <Text style={styles.modalBooking} key={index}>
+                      {`${booking.first_name} ${booking.last_name} - ${booking.time}`}
+                    </Text>
+                  ))
+                )}
+              </ScrollView>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalCloseText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </ScrollView>
     </View>
   );
 };
@@ -192,31 +193,46 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF',
-    padding: 20,
   },
-  header: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#6200EE',
-  },
-  greetingContainer: {
-    width: '100%',
-    marginBottom: 20,
-  },
-  welcomeText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  subText: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 5,
+// Updated styles
+
+fixedHeader: {
+  width: '100%',
+  backgroundColor: 'transparent',
+  position: 'absolute',
+  top: 10,
+  left: 0,
+  right: 0,
+  zIndex: 10,
+  padding: 20,
+  borderBottomColor: 'black',
+  alignItems: 'flex-start', // Align content to the left
+},
+headerText: {
+  fontSize: 30,
+  fontWeight: 'bold',
+  color: 'black',
+  textAlign: 'left', // Align text to the left
+},
+greetingContainer: {
+  alignItems: 'flex-start', // Align container content to the left
+  marginTop: 10,
+},
+welcomeText: {
+  fontSize: 22,
+  fontWeight: 'bold',
+  color: '#333',
+  textAlign: 'left', // Align text to the left
+},
+subText: {
+  fontSize: 16,
+  color: 'black',
+  marginTop: 5,
+  textAlign: 'left', // Align text to the left
+},
+  scrollViewContent: {
+    paddingTop: 150, // Spacing for fixed header and greeting
+    paddingHorizontal: 20,
   },
   dateCardContainer: {
     alignItems: 'center',
@@ -225,7 +241,7 @@ const styles = StyleSheet.create({
   dateCard: {
     width: '90%',
     padding: 20,
-    backgroundColor: '#6200EE',
+    backgroundColor: 'black',
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
@@ -236,7 +252,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   dateText: {
-    fontSize: 18,
+    fontSize: 25,
     color: '#FFF',
     fontWeight: 'bold',
   },
@@ -254,7 +270,8 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 5,
     margin: 5,
-    backgroundColor: '#FFF',
+    backgroundColor: 'white',
+    borderWidth: 2,
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
@@ -265,20 +282,20 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   statusTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 15,
+    fontWeight: 'thin',
+    color: 'black',
   },
   statusCount: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#6200EE',
+    color: 'black',
     marginTop: 5,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: 'black',
     marginBottom: 15,
   },
   boxContainer: {
@@ -294,6 +311,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 10,
     borderRadius: 20,
+    borderWidth: 2,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -311,7 +329,7 @@ const styles = StyleSheet.create({
   boxText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
+    color: 'black',
   },
   modalContainer: {
     flex: 1,
@@ -334,7 +352,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#6200EE',
+    color: 'black',
   },
   modalScroll: {
     marginBottom: 20,
@@ -345,7 +363,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   modalCloseButton: {
-    backgroundColor: '#6200EE',
+    backgroundColor: 'black',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',

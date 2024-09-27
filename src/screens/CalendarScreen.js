@@ -219,6 +219,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 70, // Add padding to move the calendar down
   },
   noDataText: {
     fontSize: 18,
