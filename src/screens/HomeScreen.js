@@ -36,7 +36,7 @@ const HomeScreen = ({ navigation }) => {
 
         // Fetch Confirmed Bookings
         const historyRef = ref(db, 'history');
-        const confirmedQuery = query(historyRef, orderByChild('status'), equalTo('confirmed'));
+        const confirmedQuery = query(historyRef, orderByChild('status'), equalTo('completed'));
         onValue(confirmedQuery, (snapshot) => {
           const confirmedBookingsList = snapshot.val();
           const confirmedCount = confirmedBookingsList ? Object.keys(confirmedBookingsList).length : 0;
@@ -125,7 +125,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.statusCount}>{pendingBookings}</Text>
           </View>
           <View style={styles.statusCard}>
-            <Text style={styles.statusTitle}>Confirmed Bookings</Text>
+            <Text style={styles.statusTitle}>Completed Bookings</Text>
             <Text style={styles.statusCount}>{confirmedBookings}</Text>
           </View>
           <View style={styles.statusCard}>
@@ -271,7 +271,6 @@ subText: {
     padding: 5,
     margin: 5,
     backgroundColor: 'white',
-    borderWidth: 2,
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',

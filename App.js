@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Image, ActivityIndicator, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -10,7 +10,14 @@ import HomeScreen from './src/screens/HomeScreen';
 import BookingScreen from './src/screens/BookingScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
-import ReportsScreen from './src/screens/ReportsScreen'; // New Reports Screen
+import ReportsScreen from './src/screens/ReportsScreen';
+
+// Import SVG icons from the src/assets/icons folder
+import HomeIcon from './src/assets/icons/homebar.svg';
+import BookingIcon from './src/assets/icons/bookingsbar.svg';
+import CalendarIcon from './src/assets/icons/calendarbar.svg';
+import HistoryIcon from './src/assets/icons/historybar.svg';
+import ReportsIcon from './src/assets/icons/reportsbar.svg';
 
 // Import the HistoryContext
 import { HistoryProvider } from './src/context/HistoryContext';
@@ -32,8 +39,9 @@ const SplashScreen = ({ navigation }) => {
 
   return (
     <View style={styles.splashContainer}>
+      <StatusBar barStyle="dark-content" backgroundColor="#f8f8f8" />
       <Image
-        source={require('./assets/logo.png')} // Update the path to your logo file
+        source={require('./assets/logo.png')} // Update the path to your logo file if necessary
         style={styles.logo}
         resizeMode="contain"
       />
@@ -49,34 +57,37 @@ const MainTabs = () => {
       initialRouteName="Home"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
-          let iconName;
+          let IconComponent;
+
           switch (route.name) {
             case 'Home':
-              iconName = 'home';
+              IconComponent = HomeIcon;
               break;
             case 'Booking':
-              iconName = 'calendar';
+              IconComponent = BookingIcon;
               break;
             case 'Calendar':
-              iconName = 'calendar-outline';
+              IconComponent = CalendarIcon;
               break;
             case 'History':
-              iconName = 'time';
+              IconComponent = HistoryIcon;
               break;
-            case 'Reports': // New Reports Tab
-              iconName = 'bar-chart-outline';
+            case 'Reports':
+              IconComponent = ReportsIcon;
               break;
             default:
-              iconName = 'home';
+              IconComponent = HomeIcon;
           }
-          return <Ionicons name={iconName} size={size} color={color} />;
+
+          // Render the SVG icon
+          return <IconComponent width={size} height={size} fill={color} />;
         },
         tabBarActiveTintColor: 'white',
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
           backgroundColor: 'black',
           borderTopWidth: 0,
-          height: 60,
+          height: 65,
           paddingBottom: 5,
         },
         tabBarLabelStyle: {
@@ -100,6 +111,7 @@ const App = () => {
   return (
     <HistoryProvider>
       <NavigationContainer>
+        <StatusBar barStyle="dark-content" backgroundColor="#f8f8f8" />
         <Stack.Navigator initialRouteName="Splash">
           {/* Stack Screen for Splash Screen */}
           <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
@@ -118,7 +130,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f8f8',
+    backgroundColor: 'white',
   },
   logo: {
     width: 150,

@@ -1,33 +1,47 @@
-// src/screens/ReportScreen.js
+// src/screens/ReportsScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
-import { db } from '../firebaseConfig'; // Ensure this path is correct
-import { ref, onValue } from 'firebase/database'; // Import functions from Firebase database
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions } from 'react-native';
+import { db } from '../firebaseConfig';
+import { ref, onValue } from 'firebase/database';
+import { PieChart, BarChart } from 'react-native-chart-kit';
 
-const ReportScreen = () => {
+const screenWidth = Dimensions.get('window').width;
+
+const ReportsScreen = () => {
   const [bookingData, setBookingData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // State to handle errors
+  const [error, setError] = useState(null);
+  const [completedBookingsByMonth, setCompletedBookingsByMonth] = useState({});
+  const [bookingsByPackage, setBookingsByPackage] = useState({});
 
-  // Fetch booking data from Firebase
+  // Helper function to generate random colors for pie chart
+  const getRandomColor = () => {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  };
+
   useEffect(() => {
     const fetchBookingData = () => {
-      const bookingsRef = ref(db, 'bookings');
+      const historyRef = ref(db, 'history'); // Fetching from 'history' node
       onValue(
-        bookingsRef,
+        historyRef,
         (snapshot) => {
           const data = snapshot.val();
           if (data) {
-            const formattedData = Object.values(data); // Convert data to array format
-            setBookingData(formattedData);
+            const formattedData = Object.values(data);
+            processBookingData(formattedData); // Process the data
           } else {
             setBookingData([]);
           }
-          setLoading(false); // Stop loading once data is fetched
+          setLoading(false);
         },
         (error) => {
-          setError(error.message); // Handle errors during data fetching
-          setLoading(false); // Stop loading if there's an error
+          setError(error.message);
+          setLoading(false);
         }
       );
     };
@@ -35,24 +49,54 @@ const ReportScreen = () => {
     fetchBookingData();
   }, []);
 
-  // Calculate total bookings
-  const totalBookings = bookingData.length;
+  const processBookingData = (data) => {
+    const bookingsByMonth = {};
+    const bookingsByPackageCount = {};
 
-  // Calculate bookings per package
-  const bookingsByPackage = bookingData.reduce((acc, booking) => {
-    const packageName = booking.package || 'Unknown'; // Handle undefined package names
-    if (!acc[packageName]) {
-      acc[packageName] = 1;
-    } else {
-      acc[packageName] += 1;
-    }
-    return acc;
-  }, {});
+    data.forEach((booking) => {
+      const bookingDate = new Date(booking.date);
+      const month = bookingDate.toLocaleString('default', { month: 'long' });
 
-  // Calculate number of cancellations
-  const totalCancellations = bookingData.filter((booking) => booking.status === 'cancelled').length;
+      // Only consider completed bookings
+      if (booking.status === 'completed') {
+        // Group by month
+        if (!bookingsByMonth[month]) {
+          bookingsByMonth[month] = 1;
+        } else {
+          bookingsByMonth[month]++;
+        }
 
-  // Render loading indicator or report content
+        // Group by package
+        const packageName = booking.package || 'Unknown'; // Handle undefined package names
+        if (!bookingsByPackageCount[packageName]) {
+          bookingsByPackageCount[packageName] = 1;
+        } else {
+          bookingsByPackageCount[packageName]++;
+        }
+      }
+    });
+
+    setCompletedBookingsByMonth(bookingsByMonth);
+    setBookingsByPackage(bookingsByPackageCount);
+  };
+
+  const pieChartData = Object.keys(completedBookingsByMonth).map((month) => ({
+    name: month,
+    count: completedBookingsByMonth[month],
+    color: getRandomColor(),
+    legendFontColor: '#7F7F7F',
+    legendFontSize: 15,
+  }));
+
+  const barChartData = {
+    labels: Object.keys(bookingsByPackage), // Package names dynamically from data
+    datasets: [
+      {
+        data: Object.values(bookingsByPackage), // Corresponding counts for each package
+      },
+    ],
+  };
+
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -62,7 +106,6 @@ const ReportScreen = () => {
     );
   }
 
-  // Render error message if there is an error
   if (error) {
     return (
       <View style={styles.errorContainer}>
@@ -72,41 +115,70 @@ const ReportScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Booking Report</Text>
-
-      {/* Total Bookings */}
-      <View style={styles.reportSection}>
-        <Text style={styles.sectionTitle}>Total Bookings</Text>
-        <Text style={styles.sectionContent}>{totalBookings}</Text>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      {/* Header Section */}
+      <View style={styles.headerSection}>
+        <Text style={styles.headerText}>Reports</Text>
+        <View style={styles.greetingContainer}>
+          <Text style={styles.welcomeText}>Your Booking Reports</Text>
+          <Text style={styles.subText}>View your completed and package-based statistics.</Text>
+        </View>
       </View>
 
-      {/* Bookings by Package */}
-      <View style={styles.reportSection}>
+      {/* Pie Chart for Completed Bookings by Month */}
+      <View style={styles.chartContainer}>
+        <Text style={styles.sectionTitle}>Completed Bookings by Month</Text>
+        {pieChartData.length > 0 ? (
+          <PieChart
+            data={pieChartData}
+            width={screenWidth - 40}
+            height={220}
+            chartConfig={{
+              backgroundColor: '#e26a00',
+              backgroundGradientFrom: '#fb8c00',
+              backgroundGradientTo: '#ffa726',
+              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            }}
+            accessor="count"
+            backgroundColor="transparent"
+            paddingLeft="15"
+            absolute
+          />
+        ) : (
+          <Text>No completed bookings data available.</Text>
+        )}
+      </View>
+
+      {/* Bar Chart for Bookings by Package */}
+      <View style={styles.chartContainer}>
         <Text style={styles.sectionTitle}>Bookings by Package</Text>
-        {Object.entries(bookingsByPackage).map(([packageName, count]) => (
-          <View key={packageName} style={styles.item}>
-            <Text style={styles.itemLabel}>{packageName}:</Text>
-            <Text style={styles.itemValue}>{count}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Total Cancellations */}
-      <View style={styles.reportSection}>
-        <Text style={styles.sectionTitle}>Total Cancellations</Text>
-        <Text style={styles.sectionContent}>{totalCancellations}</Text>
+        {Object.keys(bookingsByPackage).length > 0 ? (
+          <BarChart
+            data={barChartData}
+            width={screenWidth - 40}
+            height={220}
+            yAxisLabel=""
+            chartConfig={{
+              backgroundColor: '#1cc910',
+              backgroundGradientFrom: '#eff3ff',
+              backgroundGradientTo: '#efefef',
+              decimalPlaces: 0,
+              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            }}
+            verticalLabelRotation={30}
+          />
+        ) : (
+          <Text>No package data available.</Text>
+        )}
       </View>
     </ScrollView>
   );
 };
 
-// Styles for the Report Screen
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
+  scrollContainer: {
     padding: 20,
+    paddingBottom: 20,
   },
   loaderContainer: {
     flex: 1,
@@ -124,45 +196,37 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginVertical: 20,
+  headerSection: {
+    marginBottom: 20,
   },
-  reportSection: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 8,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
+  headerText: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  greetingContainer: {
+    marginTop: 10,
+    alignItems: 'flex-start',
+  },
+  welcomeText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  subText: {
+    fontSize: 16,
+    color: 'black',
+    marginTop: 5,
+  },
+  chartContainer: {
+    marginTop: 20,
+    paddingVertical: 20,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
   },
-  sectionContent: {
-    fontSize: 16,
-    color: '#555',
-  },
-  item: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 5,
-  },
-  itemLabel: {
-    fontSize: 16,
-    color: '#333',
-  },
-  itemValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
 });
 
-export default ReportScreen;
+export default ReportsScreen;
