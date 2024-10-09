@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    color: 'black',
   },
   subText: {
     fontSize: 16,

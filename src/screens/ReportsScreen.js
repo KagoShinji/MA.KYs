@@ -8,11 +8,20 @@ import { PieChart, BarChart } from 'react-native-chart-kit';
 const screenWidth = Dimensions.get('window').width;
 
 const ReportsScreen = () => {
-  const [bookingData, setBookingData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [completedBookingsByMonth, setCompletedBookingsByMonth] = useState({});
   const [bookingsByPackage, setBookingsByPackage] = useState({});
+  const [salesByPackage, setSalesByPackage] = useState({});
+  const [totalSales, setTotalSales] = useState(0);
+  const [mostSalePackage, setMostSalePackage] = useState('');
+
+  const packagePrices = {
+    'Package A': 3000,
+    'Package B': 4000,
+    'Package C': 5000,
+    'Package D': 6000,
+  };
 
   // Helper function to generate random colors for pie chart
   const getRandomColor = () => {
@@ -35,9 +44,8 @@ const ReportsScreen = () => {
             const formattedData = Object.values(data);
             processBookingData(formattedData); // Process the data
           } else {
-            setBookingData([]);
+            setLoading(false);
           }
-          setLoading(false);
         },
         (error) => {
           setError(error.message);
@@ -52,6 +60,10 @@ const ReportsScreen = () => {
   const processBookingData = (data) => {
     const bookingsByMonth = {};
     const bookingsByPackageCount = {};
+    const salesByPackageCount = {};
+    let totalSalesValue = 0;
+    let maxSalesPackage = '';
+    let maxSalesValue = 0;
 
     data.forEach((booking) => {
       const bookingDate = new Date(booking.date);
@@ -66,18 +78,41 @@ const ReportsScreen = () => {
           bookingsByMonth[month]++;
         }
 
-        // Group by package
+        // Group by package and calculate sales
         const packageName = booking.package || 'Unknown'; // Handle undefined package names
+        const packagePrice = packagePrices[packageName] || 0;
+
+        // Count bookings by package
         if (!bookingsByPackageCount[packageName]) {
           bookingsByPackageCount[packageName] = 1;
         } else {
           bookingsByPackageCount[packageName]++;
+        }
+
+        // Calculate sales by package
+        if (!salesByPackageCount[packageName]) {
+          salesByPackageCount[packageName] = packagePrice;
+        } else {
+          salesByPackageCount[packageName] += packagePrice;
+        }
+
+        // Increment total sales
+        totalSalesValue += packagePrice;
+
+        // Determine the most sale package
+        if (salesByPackageCount[packageName] > maxSalesValue) {
+          maxSalesValue = salesByPackageCount[packageName];
+          maxSalesPackage = packageName;
         }
       }
     });
 
     setCompletedBookingsByMonth(bookingsByMonth);
     setBookingsByPackage(bookingsByPackageCount);
+    setSalesByPackage(salesByPackageCount);
+    setTotalSales(totalSalesValue); // Set total sales
+    setMostSalePackage(maxSalesPackage); // Set most sale package
+    setLoading(false);
   };
 
   const pieChartData = Object.keys(completedBookingsByMonth).map((month) => ({
@@ -88,11 +123,20 @@ const ReportsScreen = () => {
     legendFontSize: 15,
   }));
 
-  const barChartData = {
+  const bookingsBarChartData = {
     labels: Object.keys(bookingsByPackage), // Package names dynamically from data
     datasets: [
       {
         data: Object.values(bookingsByPackage), // Corresponding counts for each package
+      },
+    ],
+  };
+
+  const salesBarChartData = {
+    labels: Object.keys(salesByPackage), // Package names dynamically from data
+    datasets: [
+      {
+        data: Object.values(salesByPackage), // Corresponding sales for each package
       },
     ],
   };
@@ -125,6 +169,18 @@ const ReportsScreen = () => {
         </View>
       </View>
 
+      {/* Sales and Most Sale Package Cards */}
+      <View style={styles.cardsContainer}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Total Sales</Text>
+          <Text style={styles.cardValue}>₱{totalSales.toLocaleString()}</Text>
+        </View>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Most Sale Package</Text>
+          <Text style={styles.cardValue}>{mostSalePackage}</Text>
+        </View>
+      </View>
+
       {/* Pie Chart for Completed Bookings by Month */}
       <View style={styles.chartContainer}>
         <Text style={styles.sectionTitle}>Completed Bookings by Month</Text>
@@ -154,7 +210,7 @@ const ReportsScreen = () => {
         <Text style={styles.sectionTitle}>Bookings by Package</Text>
         {Object.keys(bookingsByPackage).length > 0 ? (
           <BarChart
-            data={barChartData}
+            data={bookingsBarChartData}
             width={screenWidth - 40}
             height={220}
             yAxisLabel=""
@@ -164,11 +220,40 @@ const ReportsScreen = () => {
               backgroundGradientTo: '#efefef',
               decimalPlaces: 0,
               color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              paddingRight: 50, // Increase padding for label visibility
             }}
-            verticalLabelRotation={30}
+            verticalLabelRotation={15} // Reduce rotation angle for better readability
+            fromZero // Ensure the chart starts from zero
           />
         ) : (
           <Text>No package data available.</Text>
+        )}
+      </View>
+
+      {/* Bar Chart for Sales by Package */}
+      <View style={styles.chartContainer}>
+        <Text style={styles.sectionTitle}>Sales by Package</Text>
+        {Object.keys(salesByPackage).length > 0 ? (
+          <BarChart
+            data={salesBarChartData}
+            width={screenWidth - 40}
+            height={220}
+            yAxisLabel="₱"
+            chartConfig={{
+              backgroundColor: '#1cc910',
+              backgroundGradientFrom: '#eff3ff',
+              backgroundGradientTo: '#efefef',
+              decimalPlaces: 0,
+              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              paddingRight: 50, // Increase padding for label visibility
+            }}
+            verticalLabelRotation={15} // Reduce rotation angle for better readability
+            fromZero // Ensure the chart starts from zero
+          />
+        ) : (
+          <Text>No sales data available.</Text>
         )}
       </View>
     </ScrollView>
@@ -178,6 +263,7 @@ const ReportsScreen = () => {
 const styles = StyleSheet.create({
   scrollContainer: {
     padding: 20,
+    backgroundColor: 'white',
     paddingBottom: 20,
   },
   loaderContainer: {
@@ -217,6 +303,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'black',
     marginTop: 5,
+  },
+  cardsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  card: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    marginHorizontal: 5,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  cardValue: {
+    fontSize: 23,
+    fontWeight: 'bold',
+    color: '#000',
+    marginTop: 10,
   },
   chartContainer: {
     marginTop: 20,

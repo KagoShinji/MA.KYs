@@ -197,25 +197,32 @@ const HistoryScreen = () => {
 
         {/* Filter Buttons */}
         <View style={styles.filterContainer}>
-          <TouchableOpacity
-            style={[styles.filterButton, filterType === 'all' ? styles.activeFilter : null]}
-            onPress={() => handleFilterChange('all')}
-          >
-            <Text style={styles.filterButtonText}>All</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterButton, filterType === 'completed' ? styles.activeFilter : null]}
-            onPress={() => handleFilterChange('completed')}
-          >
-            <Text style={styles.filterButtonText}>Completed</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterButton, filterType === 'cancelled' ? styles.activeFilter : null]}
-            onPress={() => handleFilterChange('cancelled')}
-          >
-            <Text style={styles.filterButtonText}>Cancelled</Text>
-          </TouchableOpacity>
-        </View>
+  <TouchableOpacity
+    style={[styles.filterButton, filterType === 'all' ? styles.activeFilter : null]}
+    onPress={() => handleFilterChange('all')}
+  >
+    <Text style={[styles.filterButtonText, filterType === 'all' ? styles.activeFilterText : null]}>
+      All
+    </Text>
+  </TouchableOpacity>
+  <TouchableOpacity
+    style={[styles.filterButton, filterType === 'completed' ? styles.activeFilter : null]}
+    onPress={() => handleFilterChange('completed')}
+  >
+    <Text style={[styles.filterButtonText, filterType === 'completed' ? styles.activeFilterText : null]}>
+      Completed
+    </Text>
+  </TouchableOpacity>
+  <TouchableOpacity
+    style={[styles.filterButton, filterType === 'cancelled' ? styles.activeFilter : null]}
+    onPress={() => handleFilterChange('cancelled')}
+  >
+    <Text style={[styles.filterButtonText, filterType === 'cancelled' ? styles.activeFilterText : null]}>
+      Cancelled
+    </Text>
+  </TouchableOpacity>
+</View>
+
       </View>
 
       {/* Card List */}
@@ -382,18 +389,21 @@ const styles = StyleSheet.create({
   filterButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: 'white',
     borderRadius: 10,
     borderColor: 'black',
     borderWidth: 1,
   },
   filterButtonText: {
     fontSize: 16,
-    color: '#333',
+    color: 'black',
   },
   activeFilter: {
-    backgroundColor: '#007bff',
-    borderColor: '#007bff',
+    backgroundColor: 'black',
+    borderColor: 'black',
+  },
+  activeFilterText: {
+    color: 'white',
   },
   cardListContainer: {
     flex: 1, // Allow the card list to take the remaining space

@@ -221,7 +221,7 @@ greetingContainer: {
 welcomeText: {
   fontSize: 22,
   fontWeight: 'bold',
-  color: '#333',
+  color: 'black',
   textAlign: 'left', // Align text to the left
 },
 subText: {
