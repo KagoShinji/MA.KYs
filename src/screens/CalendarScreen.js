@@ -28,19 +28,19 @@ const CalendarScreen = () => {
           Object.keys(data).forEach((key) => {
             const booking = data[key];
 
-            if (booking.status === 'completed') {
+            if (booking.status === 'confirmed') {
               const bookingDate = booking.date;
 
               // Group bookings for the calendar
               if (formattedBookings[bookingDate]) {
                 formattedBookings[bookingDate].dots.push({
                   key,
-                  color: '#000',
+                  color: 'red',
                   bookingDetails: booking,
                 });
               } else {
                 formattedBookings[bookingDate] = {
-                  dots: [{ key, color: '#000', bookingDetails: booking }],
+                  dots: [{ key, color: 'red', bookingDetails: booking }],
                   marked: true,
                 };
               }
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 10,
-    backgroundColor: 'black',
+    backgroundColor: '#f44336',
     borderRadius: 5,
     alignItems: 'center',
   },

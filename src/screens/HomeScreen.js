@@ -36,7 +36,7 @@ const HomeScreen = ({ navigation }) => {
 
         // Fetch Confirmed Bookings
         const historyRef = ref(db, 'history');
-        const confirmedQuery = query(historyRef, orderByChild('status'), equalTo('completed'));
+        const confirmedQuery = query(historyRef, orderByChild('status'), equalTo('confirmed'));
         onValue(confirmedQuery, (snapshot) => {
           const confirmedBookingsList = snapshot.val();
           const confirmedCount = confirmedBookingsList ? Object.keys(confirmedBookingsList).length : 0;
@@ -44,7 +44,7 @@ const HomeScreen = ({ navigation }) => {
         });
 
         // Fetch Cancelled Bookings
-        const cancelledQuery = query(historyRef, orderByChild('status'), equalTo('cancelled'));
+        const cancelledQuery = query(historyRef, orderByChild('status'), equalTo('canceled'));
         onValue(cancelledQuery, (snapshot) => {
           const cancelledBookingsList = snapshot.val();
           const cancelledCount = cancelledBookingsList ? Object.keys(cancelledBookingsList).length : 0;
@@ -69,8 +69,8 @@ const HomeScreen = ({ navigation }) => {
     fetchBookings();
   }, [currentDate]);
 
-  const navigateToScreen = (screenName) => {
-    navigation.navigate(screenName);
+  const navigateToScreen = (screenName, params = {}) => {
+    navigation.navigate(screenName, params);
   };
 
   const animatedValue = new Animated.Value(1);
@@ -120,18 +120,32 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Booking Status Cards */}
         <View style={styles.statusContainer}>
-          <View style={styles.statusCard}>
+          {/* Pending Bookings */}
+          <TouchableOpacity
+            style={styles.statusCard}
+            onPress={() => navigateToScreen('Booking')} // Navigate to BookingScreen
+          >
             <Text style={styles.statusTitle}>Pending Bookings</Text>
             <Text style={styles.statusCount}>{pendingBookings}</Text>
-          </View>
-          <View style={styles.statusCard}>
-            <Text style={styles.statusTitle}>Completed Bookings</Text>
+          </TouchableOpacity>
+
+          {/* Confirmed Bookings */}
+          <TouchableOpacity
+            style={styles.statusCard}
+            onPress={() => navigateToScreen('History', { filterType: 'confirmed' })} // Navigate to HistoryScreen with confirmed filter
+          >
+            <Text style={styles.statusTitle}>Confirmed Bookings</Text>
             <Text style={styles.statusCount}>{confirmedBookings}</Text>
-          </View>
-          <View style={styles.statusCard}>
+          </TouchableOpacity>
+
+          {/* Cancelled Bookings */}
+          <TouchableOpacity
+            style={styles.statusCard}
+            onPress={() => navigateToScreen('History', { filterType: 'canceled' })} // Navigate to HistoryScreen with canceled filter
+          >
             <Text style={styles.statusTitle}>Cancelled Bookings</Text>
             <Text style={styles.statusCount}>{cancelledBookings}</Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Actions Section */}
@@ -194,44 +208,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
-// Updated styles
-
-fixedHeader: {
-  width: '100%',
-  backgroundColor: 'transparent',
-  position: 'absolute',
-  top: 10,
-  left: 0,
-  right: 0,
-  zIndex: 10,
-  padding: 20,
-  borderBottomColor: 'black',
-  alignItems: 'flex-start', // Align content to the left
-},
-headerText: {
-  fontSize: 30,
-  fontWeight: 'bold',
-  color: 'black',
-  textAlign: 'left', // Align text to the left
-},
-greetingContainer: {
-  alignItems: 'flex-start', // Align container content to the left
-  marginTop: 10,
-},
-welcomeText: {
-  fontSize: 22,
-  fontWeight: 'bold',
-  color: 'black',
-  textAlign: 'left', // Align text to the left
-},
-subText: {
-  fontSize: 16,
-  color: 'black',
-  marginTop: 5,
-  textAlign: 'left', // Align text to the left
-},
+  fixedHeader: {
+    width: '100%',
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    top: 10,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    padding: 20,
+    borderBottomColor: 'black',
+    alignItems: 'flex-start',
+  },
+  headerText: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: 'black',
+    textAlign: 'left',
+  },
+  greetingContainer: {
+    alignItems: 'flex-start',
+    marginTop: 10,
+  },
+  welcomeText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: 'black',
+    textAlign: 'left',
+  },
+  subText: {
+    fontSize: 16,
+    color: 'black',
+    marginTop: 5,
+    textAlign: 'left',
+  },
   scrollViewContent: {
-    paddingTop: 150, // Spacing for fixed header and greeting
+    paddingTop: 150,
     paddingHorizontal: 20,
   },
   dateCardContainer: {

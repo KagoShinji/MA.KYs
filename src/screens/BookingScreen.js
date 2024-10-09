@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert, Image, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../firebaseConfig';
 import { ref, onValue, remove, set } from 'firebase/database';
@@ -21,6 +21,7 @@ const BookingScreen = () => {
   const [selectedImageUrl, setSelectedImageUrl] = useState(null); // State for the image URL
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [searchQuery, setSearchQuery] = useState(''); // State for the search query
+  const [animation] = useState(new Animated.Value(0)); // Animation state for modal
 
   useEffect(() => {
     const bookingsRef = ref(db, 'bookings');
@@ -82,7 +83,7 @@ const BookingScreen = () => {
         },
         {
           text: "Confirm",
-          onPress: () => transferBookingToHistory(booking, 'completed'),
+          onPress: () => transferBookingToHistory(booking, 'confirmed'),
         }
       ]
     );
@@ -100,7 +101,7 @@ const BookingScreen = () => {
         },
         {
           text: "Cancel Booking",
-          onPress: () => transferBookingToHistory(booking, 'cancelled'),
+          onPress: () => transferBookingToHistory(booking, 'canceled'),
           style: "destructive",
         }
       ]
@@ -137,13 +138,24 @@ const BookingScreen = () => {
 
   const openBookingDetailsModal = (booking) => {
     setSelectedBooking(booking);
-    setModalVisible(true);
+    toggleModal(true); // Use the animated toggle
   };
 
   const closeModal = () => {
     setSelectedBooking(null);
-    setModalVisible(false);
+    toggleModal(false); // Use the animated toggle
   };
+
+// Toggle modal visibility with animation (including fade effect)
+const toggleModal = (visible) => {
+  setModalVisible(visible);
+  Animated.timing(animation, {
+    toValue: visible ? 1 : 0,
+    duration: 300,
+    useNativeDriver: true,
+    easing: Easing.inOut(Easing.ease),
+  }).start();
+};
 
   // Function to open Image Modal
   const openImageModal = (url) => {
@@ -156,6 +168,26 @@ const BookingScreen = () => {
     setSelectedImageUrl(null); // Clear the image URL
     setImageModalVisible(false); // Close the modal
   };
+
+// Modal animation style with fade effect
+const modalAnimationStyle = {
+  transform: [
+    {
+      scale: animation.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.8, 1],
+      }),
+    },
+    {
+      translateY: animation.interpolate({
+        inputRange: [0, 1],
+        outputRange: [300, 0],
+      }),
+    },
+  ],
+  opacity: animation, // Add opacity for fade effect
+};
+
 
   // Filter bookings based on search query (by Name, Month, and Date)
   const filteredBookings = bookings.filter((booking) => {
@@ -228,9 +260,16 @@ const BookingScreen = () => {
               style={styles.card}
             >
               <View style={styles.cardContent}>
+                {/* Display the booking ID */}
+                <Text style={styles.cardTitle}>Booking ID: {booking.id}</Text>
                 <Text style={styles.cardTitle}>Name: {booking.first_name} {booking.last_name}</Text>
+
+                {/* Display the booking date and time */}
                 <Text style={styles.cardDescription}>Booking Date: {formatDateTime(booking.date)}</Text>
+                <Text style={styles.cardDescription}>Booking Time: {booking.time}</Text>
+
                 <Text style={styles.cardDescription}>Package: {booking.package}</Text>
+
                 {/* Check if the booking is recent and display "Recent Booking" */}
                 {isRecentBooking(booking.date_time) && (
                   <Text style={styles.recentBookingText}>Recent Booking</Text>
@@ -246,11 +285,11 @@ const BookingScreen = () => {
         <Modal
           transparent={true}
           visible={modalVisible}
-          animationType="slide"
+          animationType="none"
           onRequestClose={closeModal}
         >
           <View style={styles.modalBackground}>
-            <View style={styles.modalContainer}>
+            <Animated.View style={[styles.modalContainer, modalAnimationStyle]}>
               <Text style={styles.modalTitle}>Booking Details</Text>
               <ScrollView style={styles.modalScroll}>
                 <Text style={styles.modalText}>
@@ -297,7 +336,7 @@ const BookingScreen = () => {
               <TouchableOpacity style={styles.modalCloseButton} onPress={closeModal}>
                 <Text style={styles.modalCloseText}>Close</Text>
               </TouchableOpacity>
-            </View>
+            </Animated.View>
           </View>
         </Modal>
       )}
@@ -440,7 +479,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.8)',
   },
   modalContainer: {
     width: '80%',
@@ -452,9 +491,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 10,
+    
   },
   modalScroll: {
-    maxHeight: 300,
+    maxHeight: 1000,
   },
   modalTitle: {
     fontSize: 18,

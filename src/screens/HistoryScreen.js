@@ -24,6 +24,7 @@ const HistoryScreen = () => {
   const [imageModalVisible, setImageModalVisible] = useState(false); // State for image modal
   const [imageToShow, setImageToShow] = useState(null); // URL of the image to show
   const screenWidth = Dimensions.get('window').width;
+  
 
   useEffect(() => {
     const historyRef = ref(db, 'history');
@@ -110,10 +111,10 @@ const HistoryScreen = () => {
   const handleFilterChange = (status) => {
     setFilterType(status);
 
-    if (status === 'completed') {
-      setFilteredHistory(history.filter((item) => item.status === 'completed'));
-    } else if (status === 'cancelled') {
-      setFilteredHistory(history.filter((item) => item.status === 'cancelled'));
+    if (status === 'confirmed') {
+      setFilteredHistory(history.filter((item) => item.status === 'confirmed'));
+    } else if (status === 'canceled') {
+      setFilteredHistory(history.filter((item) => item.status === 'canceled'));
     } else {
       setFilteredHistory(history);
     }
@@ -206,18 +207,18 @@ const HistoryScreen = () => {
     </Text>
   </TouchableOpacity>
   <TouchableOpacity
-    style={[styles.filterButton, filterType === 'completed' ? styles.activeFilter : null]}
-    onPress={() => handleFilterChange('completed')}
+    style={[styles.filterButton, filterType === 'confirmed' ? styles.activeFilter : null]}
+    onPress={() => handleFilterChange('confirmed')}
   >
-    <Text style={[styles.filterButtonText, filterType === 'completed' ? styles.activeFilterText : null]}>
+    <Text style={[styles.filterButtonText, filterType === 'confirmed' ? styles.activeFilterText : null]}>
       Completed
     </Text>
   </TouchableOpacity>
   <TouchableOpacity
-    style={[styles.filterButton, filterType === 'cancelled' ? styles.activeFilter : null]}
-    onPress={() => handleFilterChange('cancelled')}
+    style={[styles.filterButton, filterType === 'canceled' ? styles.activeFilter : null]}
+    onPress={() => handleFilterChange('canceled')}
   >
-    <Text style={[styles.filterButtonText, filterType === 'cancelled' ? styles.activeFilterText : null]}>
+    <Text style={[styles.filterButtonText, filterType === 'canceled' ? styles.activeFilterText : null]}>
       Cancelled
     </Text>
   </TouchableOpacity>
@@ -237,7 +238,7 @@ const HistoryScreen = () => {
               return (
                 <Swipeable key={item.id} renderRightActions={() => renderRightActions(item)}>
                   <TouchableOpacity
-                    style={[styles.card, item.status === 'cancelled' ? styles.cancelledCard : styles.completedCard]}
+                    style={[styles.card, item.status === 'canceled' ? styles.cancelledCard : styles.completedCard]}
                     onPress={() => openModal(item)} // Open modal on card press
                   >
                     <Text style={styles.cardTitle}>
@@ -248,7 +249,7 @@ const HistoryScreen = () => {
                     </Text>
                     <Text style={styles.cardDescription}>Date: {formatDate(item.date)}</Text>
                     <Text style={styles.cardDescription}>
-                      {item.status === 'cancelled' ? 'Cancelled on:' : 'Completed on:'} {new Date(item.timestamp).toLocaleString()}
+                      {item.status === 'canceled' ? 'Canceled on:' : 'Completed on:'} {new Date(item.timestamp).toLocaleString()}
                     </Text>
                   </TouchableOpacity>
                 </Swipeable>
@@ -407,7 +408,7 @@ const styles = StyleSheet.create({
   },
   cardListContainer: {
     flex: 1, // Allow the card list to take the remaining space
-    marginTop: 120, // Ensure it's below the filter buttons and search bar
+    marginTop: 100, // Ensure it's below the filter buttons and search bar
     paddingHorizontal: 20,
   },
   scrollContainer: {
@@ -501,7 +502,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   modalCloseButton: {
-    backgroundColor: 'black',
+    backgroundColor: '#f44336',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
@@ -513,7 +514,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   imageButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: 'black',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',

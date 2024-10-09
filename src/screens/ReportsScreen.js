@@ -267,6 +267,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   loaderContainer: {
+    backgroundColor: 'white',
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -286,6 +287,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerText: {
+    marginTop: 10,
     fontSize: 30,
     fontWeight: 'bold',
     color: 'black',
