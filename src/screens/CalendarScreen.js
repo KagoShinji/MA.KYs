@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions, Modal, Text, TouchableOpacity, ScrollView, Animated, Easing } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  Modal,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+} from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { db } from '../firebaseConfig';
 import { ref, onValue } from 'firebase/database';
-import { Ionicons } from '@expo/vector-icons'; // Import Ionicons for icons
+import { Ionicons } from '@expo/vector-icons';
 
 const CalendarScreen = () => {
   const [calendarBookings, setCalendarBookings] = useState({});
@@ -11,9 +20,10 @@ const CalendarScreen = () => {
   const [selectedDateBookings, setSelectedDateBookings] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [noHistoryData, setNoHistoryData] = useState(false);
-  const [animation] = useState(new Animated.Value(0)); // Animation state
+  const [filterType, setFilterType] = useState('morning'); // Filter type for morning or afternoon
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [imageUrl, setImageUrl] = useState(null); // Store the URL of the image to display
 
-  // Fetch booking data from Firebase
   useEffect(() => {
     const historyRef = ref(db, 'history');
 
@@ -22,16 +32,16 @@ const CalendarScreen = () => {
       (snapshot) => {
         const data = snapshot.val();
         if (data) {
-          setNoHistoryData(false); // Reset no data state
+          setNoHistoryData(false); 
           const formattedBookings = {};
           const completedBookingsList = {};
+
           Object.keys(data).forEach((key) => {
             const booking = data[key];
 
             if (booking.status === 'confirmed') {
               const bookingDate = booking.date;
 
-              // Group bookings for the calendar
               if (formattedBookings[bookingDate]) {
                 formattedBookings[bookingDate].dots.push({
                   key,
@@ -45,7 +55,6 @@ const CalendarScreen = () => {
                 };
               }
 
-              // Group completed bookings by date
               if (completedBookingsList[bookingDate]) {
                 completedBookingsList[bookingDate].push(booking);
               } else {
@@ -68,41 +77,86 @@ const CalendarScreen = () => {
     return () => unsubscribe();
   }, []);
 
-  // Handle selecting a day on the calendar
+  // Filter the bookings based on the filterType (morning/afternoon)
+  const filterBookings = (bookings) => {
+    return bookings.filter((booking) => {
+      const timeRange = booking.bookingDetails.time || '';
+      if (filterType === 'morning') {
+        return timeRange.includes('AM');
+      } else {
+        return timeRange.includes('PM');
+      }
+    });
+  };
+
+  // Handle filtering when the day is selected
   const handleDayPress = (day) => {
     const bookings = calendarBookings[day.dateString]?.dots || [];
+    const morningBookings = bookings.filter((booking) => booking.bookingDetails.time.includes('AM'));
+
+    if (morningBookings.length > 0) {
+      setFilterType('morning');
+    } else {
+      setFilterType('afternoon');
+    }
+
     setSelectedDateBookings(bookings);
     toggleModal(true);
   };
 
-  // Animate modal visibility
   const toggleModal = (visible) => {
     setModalVisible(visible);
-    Animated.timing(animation, {
-      toValue: visible ? 1 : 0,
-      duration: 300,
-      useNativeDriver: true,
-      easing: Easing.inOut(Easing.ease),
-    }).start();
   };
 
-  // Modal animation style
-  const modalAnimationStyle = {
-    transform: [
-      {
-        scale: animation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.8, 1],
-        }),
-      },
-      {
-        translateY: animation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [300, 0],
-        }),
-      },
-    ],
-    opacity: animation,
+  const toggleImageModal = (url) => {
+    setImageUrl(url);  // Set the image URL
+    setImageModalVisible(true);  // Open the modal to view the image
+  };
+
+  // Render the filtered bookings based on morning/afternoon
+  const renderBookings = () => {
+    const filteredBookings = filterBookings(selectedDateBookings);
+    if (filteredBookings.length > 0) {
+      return filteredBookings.map((item) => (
+        <View key={item.key} style={styles.bookingItem}>
+          <Text style={styles.bookingText}>
+            <Ionicons name="person-circle-outline" size={16} color="#000" />{' '}
+            {item.bookingDetails.first_name} {item.bookingDetails.last_name}
+          </Text>
+          <Text style={styles.bookingText}>
+            <Ionicons name="cube-outline" size={16} color="#000" /> Package:{' '}
+            {item.bookingDetails.package}
+          </Text>
+          <Text style={styles.bookingText}>
+            <Ionicons name="calendar-outline" size={16} color="#000" /> Date:{' '}
+            {item.bookingDetails.date}
+          </Text>
+          <Text style={styles.bookingText}>
+            <Ionicons name="time-outline" size={16} color="#000" /> Time:{' '}
+            {item.bookingDetails.time}
+          </Text>
+          <Text style={styles.bookingText}>
+            <Ionicons name="mail-outline" size={16} color="#000" /> Email:{' '}
+            {item.bookingDetails.email_address}
+          </Text>
+          <Text style={styles.bookingText}>
+            <Ionicons name="call-outline" size={16} color="#000" /> Contact: {item.bookingDetails.contact_number}
+          </Text>
+          <Text style={styles.bookingText}>
+            <Ionicons name="card-outline" size={16} color="#000" /> Payment Method: {item.bookingDetails.payment_method}
+          </Text>
+
+          <TouchableOpacity style={styles.viewButton} onPress={() => toggleImageModal(item.bookingDetails.id_image_url)}>
+            <Text style={styles.viewButtonText}>View ID Image</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.viewButton} onPress={() => toggleImageModal(item.bookingDetails.receipt_url)}>
+            <Text style={styles.viewButtonText}>View Receipt</Text>
+          </TouchableOpacity>
+        </View>
+      ));
+    } else {
+      return <Text style={styles.emptyText}>No {filterType} bookings available for this date.</Text>;
+    }
   };
 
   return (
@@ -116,7 +170,6 @@ const CalendarScreen = () => {
         </View>
       </View>
 
-      {/* Calendar or No Data */}
       {noHistoryData ? (
         <View style={styles.noDataContainer}>
           <Text style={styles.noDataText}>No bookings available.</Text>
@@ -133,37 +186,76 @@ const CalendarScreen = () => {
         </View>
       )}
 
-      {/* Booking modal */}
-      <Modal transparent={true} visible={isModalVisible} animationType="none" onRequestClose={() => toggleModal(false)}>
+      {/* Booking Modal */}
+      <Modal
+        transparent={true}
+        visible={isModalVisible}
+        animationType="none"
+        onRequestClose={() => toggleModal(false)}
+      >
         <View style={styles.modalContainer}>
-          <Animated.View style={[styles.modalContent, modalAnimationStyle]}>
+          <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Bookings</Text>
+
+            {/* Filter buttons */}
+            <View style={styles.filterContainer}>
+              <TouchableOpacity
+                onPress={() => setFilterType('morning')}
+                style={[
+                  styles.filterButton,
+                  filterType === 'morning' && styles.activeFilterButton,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    filterType === 'morning' && styles.activeFilterButtonText,
+                  ]}
+                >
+                  Morning
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setFilterType('afternoon')}
+                style={[
+                  styles.filterButton,
+                  filterType === 'afternoon' && styles.activeFilterButton,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    filterType === 'afternoon' && styles.activeFilterButtonText,
+                  ]}
+                >
+                  Afternoon
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <ScrollView style={styles.bookingList}>
-              {selectedDateBookings.length > 0 ? (
-                selectedDateBookings.map((item) => (
-                  <View key={item.key} style={styles.bookingItem}>
-                    <Text style={styles.bookingText}>
-                      <Ionicons name="person-circle-outline" size={16} color="#000" /> {item.bookingDetails.first_name} {item.bookingDetails.last_name}
-                    </Text>
-                    <Text style={styles.bookingText}>
-                      <Ionicons name="cube-outline" size={16} color="#000" /> Package: {item.bookingDetails.package}
-                    </Text>
-                    <Text style={styles.bookingText}>
-                      <Ionicons name="calendar-outline" size={16} color="#000" /> Date: {item.bookingDetails.date}
-                    </Text>
-                    <Text style={styles.bookingText}>
-                      <Ionicons name="time-outline" size={16} color="#000" /> Time: {item.bookingDetails.time}
-                    </Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No bookings found for this date.</Text>
-              )}
+              {renderBookings()}
             </ScrollView>
+
             <TouchableOpacity style={styles.closeButton} onPress={() => toggleModal(false)}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Image Modal */}
+      <Modal
+        transparent={true}
+        visible={imageModalVisible}
+        animationType="fade"
+        onRequestClose={() => setImageModalVisible(false)}
+      >
+        <View style={styles.imageModalContainer}>
+          <Image source={{ uri: imageUrl }} style={styles.modalImage} resizeMode="contain" />
+          <TouchableOpacity style={styles.closeButton} onPress={() => setImageModalVisible(false)}>
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -266,9 +358,59 @@ const styles = StyleSheet.create({
     color: '#000',
     marginBottom: 10,
   },
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 10,
+  },
+  filterButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    backgroundColor: '#ccc',
+    flex: 1,
+    marginHorizontal: 5,
+    alignItems: 'center',
+  },
+  activeFilterButton: {
+    backgroundColor: '#000',
+  },
+  filterButtonText: {
+    color: '#000',
+    fontSize: 16,
+  },
+  activeFilterButtonText: {
+    color: '#fff',
+  },
   bookingList: {
     width: '100%',
     marginBottom: 20,
+  },
+  bookingItem: {
+    marginBottom: 15,
+  },
+  bookingText: {
+    fontSize: 16,
+    marginVertical: 5,
+    color: '#000',
+  },
+  viewButton: {
+    backgroundColor: '#000',
+    borderRadius: 5,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    marginVertical: 5,
+    alignItems: 'center',
+  },
+  viewButtonText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
   },
   closeButton: {
     padding: 10,
@@ -280,6 +422,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  imageModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+  },
+  modalImage: {
+    width: '90%',
+    height: '90%',
   },
 });
 

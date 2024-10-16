@@ -1,4 +1,3 @@
-// src/screens/ReportsScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions } from 'react-native';
 import { db } from '../firebaseConfig';
@@ -70,7 +69,7 @@ const ReportsScreen = () => {
       const month = bookingDate.toLocaleString('default', { month: 'long' });
 
       // Only consider completed bookings
-      if (booking.status === 'completed') {
+      if (booking.status === 'confirmed') {
         // Group by month
         if (!bookingsByMonth[month]) {
           bookingsByMonth[month] = 1;
@@ -141,6 +140,13 @@ const ReportsScreen = () => {
     ],
   };
 
+  // Calculate dynamic width based on the number of bars
+  const dynamicWidthForBars = (dataLength) => {
+    const barWidth = 50; // Set each bar's width
+    const minWidth = screenWidth - 40; // Minimum chart width
+    return Math.max(barWidth * dataLength, minWidth);
+  };
+
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -209,23 +215,26 @@ const ReportsScreen = () => {
       <View style={styles.chartContainer}>
         <Text style={styles.sectionTitle}>Bookings by Package</Text>
         {Object.keys(bookingsByPackage).length > 0 ? (
-          <BarChart
-            data={bookingsBarChartData}
-            width={screenWidth - 40}
-            height={220}
-            yAxisLabel=""
-            chartConfig={{
-              backgroundColor: '#1cc910',
-              backgroundGradientFrom: '#eff3ff',
-              backgroundGradientTo: '#efefef',
-              decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              paddingRight: 50, // Increase padding for label visibility
-            }}
-            verticalLabelRotation={15} // Reduce rotation angle for better readability
-            fromZero // Ensure the chart starts from zero
-          />
+          <ScrollView horizontal>
+            <BarChart
+              data={bookingsBarChartData}
+              width={dynamicWidthForBars(Object.keys(bookingsByPackage).length)} // Dynamic width
+              height={220}
+              yAxisLabel=""
+              chartConfig={{
+                backgroundColor: 'white',
+                backgroundGradientFrom: 'white',
+                backgroundGradientTo: 'white',
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(30, 144, 255, ${opacity})`, // Set bar color to blue with opacity
+                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Set label color to black
+                paddingRight: 50,
+                barPercentage: 0.5, // Adjust this value to make the bars thinner (default is 1)
+              }}
+              verticalLabelRotation={15}
+              fromZero
+            />
+          </ScrollView>
         ) : (
           <Text>No package data available.</Text>
         )}
@@ -235,23 +244,26 @@ const ReportsScreen = () => {
       <View style={styles.chartContainer}>
         <Text style={styles.sectionTitle}>Sales by Package</Text>
         {Object.keys(salesByPackage).length > 0 ? (
-          <BarChart
-            data={salesBarChartData}
-            width={screenWidth - 40}
-            height={220}
-            yAxisLabel="₱"
-            chartConfig={{
-              backgroundColor: '#1cc910',
-              backgroundGradientFrom: '#eff3ff',
-              backgroundGradientTo: '#efefef',
-              decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              paddingRight: 50, // Increase padding for label visibility
-            }}
-            verticalLabelRotation={15} // Reduce rotation angle for better readability
-            fromZero // Ensure the chart starts from zero
-          />
+          <ScrollView horizontal>
+            <BarChart
+                  data={salesBarChartData}
+                  width={dynamicWidthForBars(Object.keys(salesByPackage).length)} // Dynamic width
+                  height={220}
+                  yAxisLabel="₱"  // Add Philippine Peso sign as label
+                  chartConfig={{
+                    backgroundColor: 'white',
+                    backgroundGradientFrom: 'white',
+                    backgroundGradientTo: 'white',
+                    decimalPlaces: 0,  // No decimal places for currency
+                    color: (opacity = 1) => `rgba(30, 144, 255, ${opacity})`, // Set bar color to blue with opacity
+                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Set label color to black
+                    paddingRight: 50,
+                    barPercentage: 0.5, // Adjust this value to make the bars thinner (default is 1)
+                  }}
+                  verticalLabelRotation={15}
+                  fromZero
+            />
+          </ScrollView>
         ) : (
           <Text>No sales data available.</Text>
         )}
@@ -338,11 +350,15 @@ const styles = StyleSheet.create({
   chartContainer: {
     marginTop: 20,
     paddingVertical: 20,
+    borderWidth: 1, // Adds the stroke/border
+    borderColor: '#000',
+    borderRadius: 10,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    textAlign: 'center', // Center the text
   },
 });
 

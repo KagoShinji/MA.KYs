@@ -49,11 +49,11 @@ const BookingScreen = () => {
     const { id, ...bookingWithoutId } = booking;
     const historyRef = ref(db, `history/${id}`);
 
-    // Add booking to history with status and timestamp
+    // Add booking to history with status and actionTimestamp (replacing timestamp)
     set(historyRef, {
       ...bookingWithoutId,
       status: status,
-      timestamp: Date.now(),
+      actionTimestamp: new Date().toISOString(), // Use ISO string for actionTimestamp
     })
       .then(() => {
         // Remove booking from bookings node after transferring to history
@@ -146,16 +146,16 @@ const BookingScreen = () => {
     toggleModal(false); // Use the animated toggle
   };
 
-// Toggle modal visibility with animation (including fade effect)
-const toggleModal = (visible) => {
-  setModalVisible(visible);
-  Animated.timing(animation, {
-    toValue: visible ? 1 : 0,
-    duration: 300,
-    useNativeDriver: true,
-    easing: Easing.inOut(Easing.ease),
-  }).start();
-};
+  // Toggle modal visibility with animation (including fade effect)
+  const toggleModal = (visible) => {
+    setModalVisible(visible);
+    Animated.timing(animation, {
+      toValue: visible ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+      easing: Easing.inOut(Easing.ease),
+    }).start();
+  };
 
   // Function to open Image Modal
   const openImageModal = (url) => {
@@ -169,25 +169,24 @@ const toggleModal = (visible) => {
     setImageModalVisible(false); // Close the modal
   };
 
-// Modal animation style with fade effect
-const modalAnimationStyle = {
-  transform: [
-    {
-      scale: animation.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0.8, 1],
-      }),
-    },
-    {
-      translateY: animation.interpolate({
-        inputRange: [0, 1],
-        outputRange: [300, 0],
-      }),
-    },
-  ],
-  opacity: animation, // Add opacity for fade effect
-};
-
+  // Modal animation style with fade effect
+  const modalAnimationStyle = {
+    transform: [
+      {
+        scale: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.8, 1],
+        }),
+      },
+      {
+        translateY: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [300, 0],
+        }),
+      },
+    ],
+    opacity: animation, // Add opacity for fade effect
+  };
 
   // Filter bookings based on search query (by Name, Month, and Date)
   const filteredBookings = bookings.filter((booking) => {
@@ -344,24 +343,24 @@ const modalAnimationStyle = {
       {/* Image Modal */}
       {selectedImageUrl && (
         <Modal
-          transparent={true}
-          visible={imageModalVisible}
-          animationType="fade"
-          onRequestClose={closeImageModal}
-        >
-          <View style={styles.imageModalBackground}>
-            <View style={styles.imageModalContainer}>
-              <Image
-                source={{ uri: selectedImageUrl }}
-                style={styles.modalImage}
-                resizeMode="contain"
-              />
-              <TouchableOpacity style={styles.modalCloseButton} onPress={closeImageModal}>
-                <Text style={styles.modalCloseText}>Close</Text>
-              </TouchableOpacity>
-            </View>
+        transparent={true}
+        visible={imageModalVisible}
+        animationType="fade"
+        onRequestClose={closeImageModal}
+      >
+        <View style={styles.imageModalBackground}>
+          <View style={styles.imageModalContainer}>
+            <Image
+              source={{ uri: selectedImageUrl }}
+              style={styles.modalImage}
+              resizeMode="contain"
+            />
+            <TouchableOpacity style={styles.imageModalCloseButton} onPress={closeImageModal}>
+              <Text style={styles.imageModalCloseText}>Close</Text>
+            </TouchableOpacity>
           </View>
-        </Modal>
+        </View>
+      </Modal>      
       )}
     </View>
   );
@@ -550,6 +549,19 @@ const styles = StyleSheet.create({
   modalImage: {
     width: '100%',
     height: '100%',
+  },
+  imageModalCloseButton: {
+    backgroundColor: '#f44336', // Different color (blue) for close button
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 30, // Larger button
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  imageModalCloseText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

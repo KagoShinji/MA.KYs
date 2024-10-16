@@ -24,7 +24,6 @@ const HistoryScreen = () => {
   const [imageModalVisible, setImageModalVisible] = useState(false); // State for image modal
   const [imageToShow, setImageToShow] = useState(null); // URL of the image to show
   const screenWidth = Dimensions.get('window').width;
-  
 
   useEffect(() => {
     const historyRef = ref(db, 'history');
@@ -37,7 +36,7 @@ const HistoryScreen = () => {
             id: key,
             ...data[key],
           }))
-          .sort((a, b) => b.timestamp - a.timestamp); // Sort by timestamp, most recent first
+          .sort((a, b) => new Date(b.actionTimestamp) - new Date(a.actionTimestamp)); // Sort by actionTimestamp, most recent first
 
         setHistory(historyArray);
         setFilteredHistory(historyArray); // Initially set the filtered history
@@ -88,7 +87,7 @@ const HistoryScreen = () => {
       set(bookingRef, {
         ...itemWithoutId,
         status: 'active',
-        timestamp: Date.now(),
+        actionTimestamp: new Date().toISOString(), // Store actionTimestamp as ISO string
       })
         .then(() => {
           const historyRef = ref(db, `history/${id}`);
@@ -198,31 +197,31 @@ const HistoryScreen = () => {
 
         {/* Filter Buttons */}
         <View style={styles.filterContainer}>
-  <TouchableOpacity
-    style={[styles.filterButton, filterType === 'all' ? styles.activeFilter : null]}
-    onPress={() => handleFilterChange('all')}
-  >
-    <Text style={[styles.filterButtonText, filterType === 'all' ? styles.activeFilterText : null]}>
-      All
-    </Text>
-  </TouchableOpacity>
-  <TouchableOpacity
-    style={[styles.filterButton, filterType === 'confirmed' ? styles.activeFilter : null]}
-    onPress={() => handleFilterChange('confirmed')}
-  >
-    <Text style={[styles.filterButtonText, filterType === 'confirmed' ? styles.activeFilterText : null]}>
-      Completed
-    </Text>
-  </TouchableOpacity>
-  <TouchableOpacity
-    style={[styles.filterButton, filterType === 'canceled' ? styles.activeFilter : null]}
-    onPress={() => handleFilterChange('canceled')}
-  >
-    <Text style={[styles.filterButtonText, filterType === 'canceled' ? styles.activeFilterText : null]}>
-      Cancelled
-    </Text>
-  </TouchableOpacity>
-</View>
+          <TouchableOpacity
+            style={[styles.filterButton, filterType === 'all' ? styles.activeFilter : null]}
+            onPress={() => handleFilterChange('all')}
+          >
+            <Text style={[styles.filterButtonText, filterType === 'all' ? styles.activeFilterText : null]}>
+              All
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterButton, filterType === 'confirmed' ? styles.activeFilter : null]}
+            onPress={() => handleFilterChange('confirmed')}
+          >
+            <Text style={[styles.filterButtonText, filterType === 'confirmed' ? styles.activeFilterText : null]}>
+              Completed
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterButton, filterType === 'canceled' ? styles.activeFilter : null]}
+            onPress={() => handleFilterChange('canceled')}
+          >
+            <Text style={[styles.filterButtonText, filterType === 'canceled' ? styles.activeFilterText : null]}>
+              Cancelled
+            </Text>
+          </TouchableOpacity>
+        </View>
 
       </View>
 
@@ -249,7 +248,7 @@ const HistoryScreen = () => {
                     </Text>
                     <Text style={styles.cardDescription}>Date: {formatDate(item.date)}</Text>
                     <Text style={styles.cardDescription}>
-                      {item.status === 'canceled' ? 'Canceled on:' : 'Completed on:'} {new Date(item.timestamp).toLocaleString()}
+                      {item.status === 'canceled' ? 'Canceled on:' : 'Completed on:'} {new Date(item.actionTimestamp).toLocaleString()}
                     </Text>
                   </TouchableOpacity>
                 </Swipeable>
@@ -288,6 +287,9 @@ const HistoryScreen = () => {
               <Text style={styles.modalText}>
                 <Ionicons name="call-outline" size={16} color="#000" /> Contact: {selectedBooking.contact_number}
               </Text>
+              <Text style={styles.modalText}>
+                <Ionicons name="time-outline" size={16} color="#000" /> {selectedBooking.status === 'canceled' ? 'Canceled on:' : 'Completed on:'} {new Date(selectedBooking.actionTimestamp).toLocaleString()}
+              </Text>
 
               {/* View ID and View Receipt Buttons */}
               <TouchableOpacity
@@ -314,23 +316,23 @@ const HistoryScreen = () => {
       {/* Image Modal */}
       {imageToShow && (
         <Modal
-          transparent={true}
-          visible={imageModalVisible}
-          animationType="fade"
-          onRequestClose={closeImageModal}
-        >
-          <View style={styles.imageModalBackground}>
-            <View style={styles.imageModalContainer}>
-              <Image
-                source={{ uri: imageToShow }}
-                style={styles.modalImage}
-                resizeMode="contain"
-              />
-              <TouchableOpacity style={styles.modalCloseButton} onPress={closeImageModal}>
-                <Text style={styles.modalCloseText}>Close</Text>
-              </TouchableOpacity>
-            </View>
+        transparent={true}
+        visible={imageModalVisible}
+        animationType="fade"
+        onRequestClose={closeImageModal}
+      >
+        <View style={styles.imageModalBackground}>
+          <View style={styles.imageModalContainer}>
+            <Image
+              source={{ uri: imageToShow }}
+              style={styles.modalImage}
+              resizeMode="contain"
+            />
+            <TouchableOpacity style={styles.imageModalCloseButton} onPress={closeImageModal}>
+              <Text style={styles.imageModalCloseText}>Close</Text>
+            </TouchableOpacity>
           </View>
+        </View>
         </Modal>
       )}
     </View>
@@ -408,7 +410,7 @@ const styles = StyleSheet.create({
   },
   cardListContainer: {
     flex: 1, // Allow the card list to take the remaining space
-    marginTop: 100, // Ensure it's below the filter buttons and search bar
+    marginTop: 120, // Ensure it's below the filter buttons and search bar
     paddingHorizontal: 20,
   },
   scrollContainer: {
@@ -418,7 +420,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 20,
     padding: 15,
-    marginBottom: 20,
+    marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -524,6 +526,19 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  imageModalCloseButton: {
+    backgroundColor: '#f44336',  // Different background color for the close button
+    borderRadius: 12,            // Larger border radius for more rounded button
+    paddingVertical: 12,         // Increased padding for a larger button
+    paddingHorizontal: 30,       // Increased horizontal padding for more width
+    alignItems: 'center',        // Center the text
+    marginTop: 20,               // Margin to separate the button from the image
+  },
+  imageModalCloseText: {
+    color: 'white',              // Text color
+    fontSize: 18,                // Larger font size for more prominence
+    fontWeight: 'bold',          // Bold text for emphasis
   },
   imageModalBackground: {
     flex: 1,
