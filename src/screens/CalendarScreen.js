@@ -165,8 +165,8 @@ const CalendarScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerText}>Calendar</Text>
         <View style={styles.greetingContainer}>
-          <Text style={styles.welcomeText}>Welcome!</Text>
-          <Text style={styles.subText}>What would you like to do today?</Text>
+          <Text style={styles.welcomeText}>Your Booking Calendar</Text>
+          <Text style={styles.subText}>View your scheduled bookings by selecting a date.</Text>
         </View>
       </View>
 

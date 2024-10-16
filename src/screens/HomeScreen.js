@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Modal, ScrollView } from 'react-native';
+import moment from 'moment-timezone';
+import { db } from '../firebaseConfig';
+import { ref, onValue, query, orderByChild, equalTo } from 'firebase/database';
 import BookingsIcon from '../assets/icons/bookings.svg'; // Update the path as necessary
 import CalendarIcon from '../assets/icons/calendar.svg';
 import HistoryIcon from '../assets/icons/history.svg';
 import ReportsIcon from '../assets/icons/reports.svg';
-import moment from 'moment-timezone';
-import { db } from '../firebaseConfig';
-import { ref, onValue, query, orderByChild, equalTo } from 'firebase/database';
+import BookingModal from './BookingModal'; // Adjust the path as necessary
+
 
 const HomeScreen = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [bookingsForDate, setBookingsForDate] = useState([]);
   const [pendingBookings, setPendingBookings] = useState(0);
   const [confirmedBookings, setConfirmedBookings] = useState(0);
   const [cancelledBookings, setCancelledBookings] = useState(0);
-  const [bookingsToday, setBookingsToday] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const PHILIPPINE_TIMEZONE = 'Asia/Manila';
@@ -51,14 +53,6 @@ const HomeScreen = ({ navigation }) => {
           setCancelledBookings(cancelledCount);
         });
 
-        // Fetch Bookings for Today
-        const todayQuery = query(historyRef, orderByChild('date'), equalTo(currentDate));
-        onValue(todayQuery, (snapshot) => {
-          const bookings = snapshot.val();
-          const todayBookings = bookings ? Object.values(bookings) : [];
-          setBookingsToday(todayBookings);
-        });
-
         setLoading(false);
       } catch (error) {
         console.error("Error fetching bookings data: ", error);
@@ -68,6 +62,19 @@ const HomeScreen = ({ navigation }) => {
 
     fetchBookings();
   }, [currentDate]);
+
+  // Fetch bookings for a specific date (like the calendar logic)
+  const fetchBookingsForDate = (date) => {
+    const historyRef = ref(db, 'history');
+    const dateQuery = query(historyRef, orderByChild('date'), equalTo(date));
+
+    onValue(dateQuery, (snapshot) => {
+      const bookings = snapshot.val();
+      const bookingsArray = bookings ? Object.values(bookings) : [];
+      setBookingsForDate(bookingsArray);
+      setModalVisible(true); // Open modal after fetching bookings
+    });
+  };
 
   const navigateToScreen = (screenName, params = {}) => {
     navigation.navigate(screenName, params);
@@ -108,12 +115,12 @@ const HomeScreen = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {/* Today's Date and Bookings Card */}
         <View style={styles.dateCardContainer}>
-          <TouchableOpacity style={styles.dateCard} onPress={() => setModalVisible(true)}>
+          <TouchableOpacity style={styles.dateCard} onPress={() => fetchBookingsForDate(currentDate)}>
             <Text style={styles.dateText}>{moment.tz(new Date(), PHILIPPINE_TIMEZONE).format('MMMM D, YYYY')}</Text>
             {loading ? (
               <Text style={styles.bookingTodayText}>Loading...</Text>
             ) : (
-              <Text style={styles.bookingTodayText}>{`Bookings for today: ${bookingsToday.length}`}</Text>
+              <Text style={styles.bookingTodayText}>{`Bookings for today: ${bookingsForDate.length}`}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -177,12 +184,12 @@ const HomeScreen = ({ navigation }) => {
         <Modal visible={modalVisible} transparent={true} animationType="slide">
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Today's Bookings</Text>
+              <Text style={styles.modalTitle}>Bookings for {moment(currentDate).format('MMMM D, YYYY')}</Text>
               <ScrollView style={styles.modalScroll}>
-                {bookingsToday.length === 0 ? (
+                {bookingsForDate.length === 0 ? (
                   <Text style={styles.modalBooking}>No bookings for today</Text>
                 ) : (
-                  bookingsToday.map((booking, index) => (
+                  bookingsForDate.map((booking, index) => (
                     <Text style={styles.modalBooking} key={index}>
                       {`${booking.first_name} ${booking.last_name} - ${booking.time}`}
                     </Text>

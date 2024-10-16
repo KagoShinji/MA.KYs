@@ -222,7 +222,6 @@ const HistoryScreen = () => {
             </Text>
           </TouchableOpacity>
         </View>
-
       </View>
 
       {/* Card List */}
@@ -240,6 +239,18 @@ const HistoryScreen = () => {
                     style={[styles.card, item.status === 'canceled' ? styles.cancelledCard : styles.completedCard]}
                     onPress={() => openModal(item)} // Open modal on card press
                   >
+                    {/* Status Label or Dot */}
+                    <View
+                      style={[
+                        styles.statusDot,
+                        item.status === 'canceled' ? styles.canceledDot : styles.confirmedDot,
+                      ]}
+                    >
+                      <Text style={styles.statusText}>
+                        {item.status === 'canceled' ? 'Canceled' : 'Confirmed'}
+                      </Text>
+                    </View>
+
                     <Text style={styles.cardTitle}>
                       {item.first_name} {item.last_name}
                     </Text>
@@ -316,23 +327,23 @@ const HistoryScreen = () => {
       {/* Image Modal */}
       {imageToShow && (
         <Modal
-        transparent={true}
-        visible={imageModalVisible}
-        animationType="fade"
-        onRequestClose={closeImageModal}
-      >
-        <View style={styles.imageModalBackground}>
-          <View style={styles.imageModalContainer}>
-            <Image
-              source={{ uri: imageToShow }}
-              style={styles.modalImage}
-              resizeMode="contain"
-            />
-            <TouchableOpacity style={styles.imageModalCloseButton} onPress={closeImageModal}>
-              <Text style={styles.imageModalCloseText}>Close</Text>
-            </TouchableOpacity>
+          transparent={true}
+          visible={imageModalVisible}
+          animationType="fade"
+          onRequestClose={closeImageModal}
+        >
+          <View style={styles.imageModalBackground}>
+            <View style={styles.imageModalContainer}>
+              <Image
+                source={{ uri: imageToShow }}
+                style={styles.modalImage}
+                resizeMode="contain"
+              />
+              <TouchableOpacity style={styles.imageModalCloseButton} onPress={closeImageModal}>
+                <Text style={styles.imageModalCloseText}>Close</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
         </Modal>
       )}
     </View>
@@ -410,7 +421,7 @@ const styles = StyleSheet.create({
   },
   cardListContainer: {
     flex: 1, // Allow the card list to take the remaining space
-    marginTop: 120, // Ensure it's below the filter buttons and search bar
+    marginTop: 90, // Ensure it's below the filter buttons and search bar
     paddingHorizontal: 20,
   },
   scrollContainer: {
@@ -429,6 +440,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'black',
     minHeight: 90,
+    position: 'relative', // Allows the dot/label to be positioned relative to the card
+  },
+  statusDot: {
+    position: 'absolute',      // Position the dot/label absolutely within the card
+    top: 10,                   // Distance from the top of the card
+    right: 10,                 // Distance from the right of the card
+    paddingVertical: 2,        // Some vertical padding
+    paddingHorizontal: 10,     // Some horizontal padding
+    borderRadius: 20,          // Makes the background rounded
+  },
+  confirmedDot: {
+    backgroundColor: '#28a745', // Green for confirmed status
+  },
+  canceledDot: {
+    backgroundColor: '#ff3b30', // Red for canceled status
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   cardTitle: {
     fontSize: 18,
@@ -444,13 +475,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    height: '100%',
+    height: 120,
     padding: 10,
     marginRight: 10,
   },
   actionButton: {
     width: 80,
-    height: '100%',
+    height: 100,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,

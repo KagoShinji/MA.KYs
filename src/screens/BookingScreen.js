@@ -14,6 +14,11 @@ const isRecentBooking = (bookingDateTime) => {
   return daysDiff <= 7; // Return true if booking is within the last 7 days
 };
 
+// Helper function to check if a booking is pending
+const isPendingBooking = (bookingStatus) => {
+  return bookingStatus === 'pending'; // Assuming bookings marked as 'pending' are pending
+};
+
 const BookingScreen = () => {
   const [bookings, setBookings] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -233,8 +238,8 @@ const BookingScreen = () => {
       <View style={styles.fixedHeader}>
         <Text style={styles.headerText}>Bookings</Text>
         <View style={styles.greetingContainer}>
-          <Text style={styles.welcomeText}>Welcome!</Text>
-          <Text style={styles.subText}>What would you like to do today?</Text>
+          <Text style={styles.welcomeText}>Your Recent Bookings</Text>
+          <Text style={styles.subText}>Manage your upcoming and recent bookings with ease.</Text>
         </View>
       </View>
 
@@ -246,38 +251,38 @@ const BookingScreen = () => {
         onChangeText={setSearchQuery}
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {filteredBookings.map((booking) => (
-          <Swipeable
-            key={booking.id}
-            renderRightActions={() => renderRightActions(booking)}
-            friction={1.5}
-            overshootFriction={8}
-          >
-            <TouchableOpacity
-              onPress={() => openBookingDetailsModal(booking)}
-              style={styles.card}
-            >
-              <View style={styles.cardContent}>
-                {/* Display the booking ID */}
-                <Text style={styles.cardTitle}>Booking ID: {booking.id}</Text>
-                <Text style={styles.cardTitle}>Name: {booking.first_name} {booking.last_name}</Text>
+<ScrollView contentContainerStyle={styles.scrollContainer}>
+  {filteredBookings.map((booking) => (
+    <Swipeable
+      key={booking.id}
+      renderRightActions={() => renderRightActions(booking)}
+      friction={1.5}
+      overshootFriction={8}
+    >
+      <TouchableOpacity
+        onPress={() => openBookingDetailsModal(booking)}
+        style={styles.card}
+      >
+        <View style={styles.cardContent}>
+          {/* Display the booking ID */}
+          <Text style={styles.cardTitle}>Booking ID: {booking.id}</Text>
+          <Text style={styles.cardTitle}>Name: {booking.first_name} {booking.last_name}</Text>
 
-                {/* Display the booking date and time */}
-                <Text style={styles.cardDescription}>Booking Date: {formatDateTime(booking.date)}</Text>
-                <Text style={styles.cardDescription}>Booking Time: {booking.time}</Text>
+          {/* Display the booking date and time */}
+          <Text style={styles.cardDescription}>Booking Date: {formatDateTime(booking.date)}</Text>
+          <Text style={styles.cardDescription}>Booking Time: {booking.time}</Text>
 
-                <Text style={styles.cardDescription}>Package: {booking.package}</Text>
+          <Text style={styles.cardDescription}>Package: {booking.package}</Text>
 
-                {/* Check if the booking is recent and display "Recent Booking" */}
-                {isRecentBooking(booking.date_time) && (
-                  <Text style={styles.recentBookingText}>Recent Booking</Text>
-                )}
-              </View>
-            </TouchableOpacity>
-          </Swipeable>
-        ))}
-      </ScrollView>
+          {/* Static "Pending" Badge - Displayed on every card */}
+          <View style={styles.pendingBadge}>
+            <Text style={styles.pendingText}>Pending</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Swipeable>
+  ))}
+</ScrollView>
 
       {/* Booking Details Modal */}
       {selectedBooking && (
@@ -427,6 +432,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'black',
     minHeight: 90, // Reduce the height to make it minimalist
+    position: 'relative',
   },
   cardContent: {
     flexDirection: 'column',
@@ -447,16 +453,31 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 10,
   },
+    // Updated pending badge style to match the history screen
+    pendingBadge: {
+      position: 'absolute',
+      top: -5, // Aligns the badge closer to the top-right corner
+      right: 0, // Aligns the badge closer to the right edge
+      backgroundColor: 'orange',
+      borderRadius: 10,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+  pendingText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
   actionsContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    height: 100, // Match the card height
+    height: 150, // Match the card height
     padding: 10,
   },
   actionButton: {
     width: 80,
-    height: 100,
+    height: 125,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,

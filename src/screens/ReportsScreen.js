@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Dimensions,
+} from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { db } from '../firebaseConfig';
 import { ref, onValue } from 'firebase/database';
-import { PieChart, BarChart } from 'react-native-chart-kit';
+import { BarChart } from 'react-native-chart-kit';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -14,6 +22,7 @@ const ReportsScreen = () => {
   const [salesByPackage, setSalesByPackage] = useState({});
   const [totalSales, setTotalSales] = useState(0);
   const [mostSalePackage, setMostSalePackage] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('All');
 
   const packagePrices = {
     'Package A': 3000,
@@ -22,26 +31,32 @@ const ReportsScreen = () => {
     'Package D': 6000,
   };
 
-  // Helper function to generate random colors for pie chart
-  const getRandomColor = () => {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  };
+  const monthsList = [
+    'All',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
 
   useEffect(() => {
     const fetchBookingData = () => {
-      const historyRef = ref(db, 'history'); // Fetching from 'history' node
+      const historyRef = ref(db, 'history');
       onValue(
         historyRef,
         (snapshot) => {
           const data = snapshot.val();
           if (data) {
             const formattedData = Object.values(data);
-            processBookingData(formattedData); // Process the data
+            processBookingData(formattedData);
           } else {
             setLoading(false);
           }
@@ -64,41 +79,35 @@ const ReportsScreen = () => {
     let maxSalesPackage = '';
     let maxSalesValue = 0;
 
+    // Loop through each booking in the data
     data.forEach((booking) => {
       const bookingDate = new Date(booking.date);
       const month = bookingDate.toLocaleString('default', { month: 'long' });
 
-      // Only consider completed bookings
+      // Only consider completed bookings (confirmed)
       if (booking.status === 'confirmed') {
-        // Group by month
         if (!bookingsByMonth[month]) {
-          bookingsByMonth[month] = 1;
-        } else {
-          bookingsByMonth[month]++;
+          bookingsByMonth[month] = [];
         }
+        bookingsByMonth[month].push(booking);
 
-        // Group by package and calculate sales
-        const packageName = booking.package || 'Unknown'; // Handle undefined package names
+        const packageName = booking.package || 'Unknown';
         const packagePrice = packagePrices[packageName] || 0;
 
-        // Count bookings by package
         if (!bookingsByPackageCount[packageName]) {
           bookingsByPackageCount[packageName] = 1;
         } else {
           bookingsByPackageCount[packageName]++;
         }
 
-        // Calculate sales by package
         if (!salesByPackageCount[packageName]) {
           salesByPackageCount[packageName] = packagePrice;
         } else {
           salesByPackageCount[packageName] += packagePrice;
         }
 
-        // Increment total sales
         totalSalesValue += packagePrice;
 
-        // Determine the most sale package
         if (salesByPackageCount[packageName] > maxSalesValue) {
           maxSalesValue = salesByPackageCount[packageName];
           maxSalesPackage = packageName;
@@ -109,41 +118,75 @@ const ReportsScreen = () => {
     setCompletedBookingsByMonth(bookingsByMonth);
     setBookingsByPackage(bookingsByPackageCount);
     setSalesByPackage(salesByPackageCount);
-    setTotalSales(totalSalesValue); // Set total sales
-    setMostSalePackage(maxSalesPackage); // Set most sale package
+    setTotalSales(totalSalesValue);
+    setMostSalePackage(maxSalesPackage);
     setLoading(false);
   };
 
-  const pieChartData = Object.keys(completedBookingsByMonth).map((month) => ({
-    name: month,
-    count: completedBookingsByMonth[month],
-    color: getRandomColor(),
-    legendFontColor: '#7F7F7F',
-    legendFontSize: 15,
-  }));
+  const filterDataByMonth = () => {
+    if (selectedMonth === 'All') {
+      return {
+        bookingsByPackage,
+        salesByPackage,
+        totalSales,
+      };
+    }
+
+    const filteredBookingsByPackage = {};
+    const filteredSalesByPackage = {};
+    let filteredTotalSales = 0;
+
+    const bookingsInMonth = completedBookingsByMonth[selectedMonth] || [];
+
+    bookingsInMonth.forEach((booking) => {
+      const packageName = booking.package || 'Unknown';
+      const packagePrice = packagePrices[packageName] || 0;
+
+      if (!filteredBookingsByPackage[packageName]) {
+        filteredBookingsByPackage[packageName] = 1;
+      } else {
+        filteredBookingsByPackage[packageName]++;
+      }
+
+      if (!filteredSalesByPackage[packageName]) {
+        filteredSalesByPackage[packageName] = packagePrice;
+      } else {
+        filteredSalesByPackage[packageName] += packagePrice;
+      }
+
+      filteredTotalSales += packagePrice;
+    });
+
+    return {
+      bookingsByPackage: filteredBookingsByPackage,
+      salesByPackage: filteredSalesByPackage,
+      totalSales: filteredTotalSales, // Updated total sales for the selected month
+    };
+  };
+
+  const { bookingsByPackage: filteredBookingsByPackage, salesByPackage: filteredSalesByPackage, totalSales: filteredTotalSales } = filterDataByMonth();
 
   const bookingsBarChartData = {
-    labels: Object.keys(bookingsByPackage), // Package names dynamically from data
+    labels: Object.keys(filteredBookingsByPackage),
     datasets: [
       {
-        data: Object.values(bookingsByPackage), // Corresponding counts for each package
+        data: Object.values(filteredBookingsByPackage),
       },
     ],
   };
 
   const salesBarChartData = {
-    labels: Object.keys(salesByPackage), // Package names dynamically from data
+    labels: Object.keys(filteredSalesByPackage),
     datasets: [
       {
-        data: Object.values(salesByPackage), // Corresponding sales for each package
+        data: Object.values(filteredSalesByPackage),
       },
     ],
   };
 
-  // Calculate dynamic width based on the number of bars
   const dynamicWidthForBars = (dataLength) => {
-    const barWidth = 50; // Set each bar's width
-    const minWidth = screenWidth - 40; // Minimum chart width
+    const barWidth = 50;
+    const minWidth = screenWidth - 40;
     return Math.max(barWidth * dataLength, minWidth);
   };
 
@@ -166,7 +209,6 @@ const ReportsScreen = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      {/* Header Section */}
       <View style={styles.headerSection}>
         <Text style={styles.headerText}>Reports</Text>
         <View style={styles.greetingContainer}>
@@ -175,98 +217,71 @@ const ReportsScreen = () => {
         </View>
       </View>
 
-      {/* Sales and Most Sale Package Cards */}
+      {/* Month Picker */}
+      <View style={styles.pickerContainer}>
+        <Text style={styles.pickerLabel}>Filter by Month:</Text>
+        <Picker
+          selectedValue={selectedMonth}
+          style={styles.picker}
+          onValueChange={(itemValue) => setSelectedMonth(itemValue)}
+        >
+          {monthsList.map((month) => (
+            <Picker.Item key={month} label={month} value={month} />
+          ))}
+        </Picker>
+      </View>
+
       <View style={styles.cardsContainer}>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Total Sales</Text>
-          <Text style={styles.cardValue}>₱{totalSales.toLocaleString()}</Text>
+          <Text style={styles.cardValue}>₱{filteredTotalSales.toLocaleString()}</Text>
         </View>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Most Sale Package</Text>
-          <Text style={styles.cardValue}>{mostSalePackage}</Text>
-        </View>
-      </View>
-
-      {/* Pie Chart for Completed Bookings by Month */}
-      <View style={styles.chartContainer}>
-        <Text style={styles.sectionTitle}>Completed Bookings by Month</Text>
-        {pieChartData.length > 0 ? (
-          <PieChart
-            data={pieChartData}
-            width={screenWidth - 40}
-            height={220}
-            chartConfig={{
-              backgroundColor: '#e26a00',
-              backgroundGradientFrom: '#fb8c00',
-              backgroundGradientTo: '#ffa726',
-              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-            }}
-            accessor="count"
-            backgroundColor="transparent"
-            paddingLeft="15"
-            absolute
-          />
-        ) : (
-          <Text>No completed bookings data available.</Text>
-        )}
       </View>
 
       {/* Bar Chart for Bookings by Package */}
       <View style={styles.chartContainer}>
         <Text style={styles.sectionTitle}>Bookings by Package</Text>
-        {Object.keys(bookingsByPackage).length > 0 ? (
-          <ScrollView horizontal>
-            <BarChart
-              data={bookingsBarChartData}
-              width={dynamicWidthForBars(Object.keys(bookingsByPackage).length)} // Dynamic width
-              height={220}
-              yAxisLabel=""
-              chartConfig={{
-                backgroundColor: 'white',
-                backgroundGradientFrom: 'white',
-                backgroundGradientTo: 'white',
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(30, 144, 255, ${opacity})`, // Set bar color to blue with opacity
-                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Set label color to black
-                paddingRight: 50,
-                barPercentage: 0.5, // Adjust this value to make the bars thinner (default is 1)
-              }}
-              verticalLabelRotation={15}
-              fromZero
-            />
-          </ScrollView>
-        ) : (
-          <Text>No package data available.</Text>
-        )}
+        <ScrollView horizontal>
+          <BarChart
+            data={bookingsBarChartData}
+            width={dynamicWidthForBars(Object.keys(filteredBookingsByPackage).length)}
+            height={220}
+            yAxisLabel=""
+            chartConfig={{
+              backgroundColor: 'white',
+              backgroundGradientFrom: 'white',
+              backgroundGradientTo: 'white',
+              decimalPlaces: 0,
+              color: (opacity = 1) => `rgba(30, 144, 255, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            }}
+            verticalLabelRotation={15}
+            fromZero
+          />
+        </ScrollView>
       </View>
 
       {/* Bar Chart for Sales by Package */}
       <View style={styles.chartContainer}>
         <Text style={styles.sectionTitle}>Sales by Package</Text>
-        {Object.keys(salesByPackage).length > 0 ? (
-          <ScrollView horizontal>
-            <BarChart
-                  data={salesBarChartData}
-                  width={dynamicWidthForBars(Object.keys(salesByPackage).length)} // Dynamic width
-                  height={220}
-                  yAxisLabel="₱"  // Add Philippine Peso sign as label
-                  chartConfig={{
-                    backgroundColor: 'white',
-                    backgroundGradientFrom: 'white',
-                    backgroundGradientTo: 'white',
-                    decimalPlaces: 0,  // No decimal places for currency
-                    color: (opacity = 1) => `rgba(30, 144, 255, ${opacity})`, // Set bar color to blue with opacity
-                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Set label color to black
-                    paddingRight: 50,
-                    barPercentage: 0.5, // Adjust this value to make the bars thinner (default is 1)
-                  }}
-                  verticalLabelRotation={15}
-                  fromZero
-            />
-          </ScrollView>
-        ) : (
-          <Text>No sales data available.</Text>
-        )}
+        <ScrollView horizontal>
+          <BarChart
+            data={salesBarChartData}
+            width={dynamicWidthForBars(Object.keys(filteredSalesByPackage).length)}
+            height={220}
+            yAxisLabel="₱"
+            chartConfig={{
+              backgroundColor: 'white',
+              backgroundGradientFrom: 'white',
+              backgroundGradientTo: 'white',
+              decimalPlaces: 0,
+              color: (opacity = 1) => `rgba(30, 144, 255, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            }}
+            verticalLabelRotation={15}
+            fromZero
+          />
+        </ScrollView>
       </View>
     </ScrollView>
   );
@@ -318,6 +333,17 @@ const styles = StyleSheet.create({
     color: 'black',
     marginTop: 5,
   },
+  pickerContainer: {
+    marginVertical: 20,
+  },
+  pickerLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  picker: {
+    height: 50,
+    width: screenWidth - 40,
+  },
   cardsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -350,7 +376,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     marginTop: 20,
     paddingVertical: 20,
-    borderWidth: 1, // Adds the stroke/border
+    borderWidth: 1,
     borderColor: '#000',
     borderRadius: 10,
   },
@@ -358,7 +384,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-    textAlign: 'center', // Center the text
+    textAlign: 'center',
   },
 });
 
