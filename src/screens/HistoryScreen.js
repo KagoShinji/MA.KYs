@@ -14,11 +14,12 @@ const separateBookingTime = (timeRange) => {
   return { startTime: startTime.trim(), endTime: endTime.trim() };
 };
 
-const HistoryScreen = () => {
+const HistoryScreen = ({ route }) => {
+  const { filterType: initialFilterType = 'all' } = route.params || {}; // Get filterType from route params, default to 'all'
   const [history, setHistory] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]); // Filtered history state
   const [searchQuery, setSearchQuery] = useState(''); // Search query state
-  const [filterType, setFilterType] = useState('all'); // Filter state: 'all', 'completed', 'canceled'
+  const [filterType, setFilterType] = useState(initialFilterType); // Initialize filterType from params or default to 'all'
   const [modalVisible, setModalVisible] = useState(false); // Modal state
   const [selectedBooking, setSelectedBooking] = useState(null); // Selected booking for the modal
   const [imageModalVisible, setImageModalVisible] = useState(false); // State for image modal
@@ -27,7 +28,7 @@ const HistoryScreen = () => {
 
   useEffect(() => {
     const historyRef = ref(db, 'history');
-
+  
     const unsubscribe = onValue(historyRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -37,17 +38,28 @@ const HistoryScreen = () => {
             ...data[key],
           }))
           .sort((a, b) => new Date(b.actionTimestamp) - new Date(a.actionTimestamp)); // Sort by actionTimestamp, most recent first
-
+  
         setHistory(historyArray);
-        setFilteredHistory(historyArray); // Initially set the filtered history
+  
+        // Apply the initial filter type passed from the HomeScreen
+        if (initialFilterType === 'confirmed') {
+          setFilteredHistory(historyArray.filter((item) => item.status === 'confirmed'));
+          setFilterType('confirmed');  // Ensure the filter button highlights correctly
+        } else if (initialFilterType === 'canceled') {
+          setFilteredHistory(historyArray.filter((item) => item.status === 'canceled'));
+          setFilterType('canceled');  // Ensure the filter button highlights correctly
+        } else {
+          setFilteredHistory(historyArray); // Show all bookings if no filter is applied
+          setFilterType('all');  // Ensure 'all' filter is highlighted
+        }
       } else {
         setHistory([]);
         setFilteredHistory([]);
       }
     });
-
+  
     return () => unsubscribe();
-  }, []);
+  }, [initialFilterType]); // Re-run effect when initialFilterType changes  
 
   // Handle delete action
   const handleDelete = (item) => {
@@ -197,31 +209,33 @@ const HistoryScreen = () => {
 
         {/* Filter Buttons */}
         <View style={styles.filterContainer}>
-          <TouchableOpacity
-            style={[styles.filterButton, filterType === 'all' ? styles.activeFilter : null]}
-            onPress={() => handleFilterChange('all')}
-          >
-            <Text style={[styles.filterButtonText, filterType === 'all' ? styles.activeFilterText : null]}>
-              All
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterButton, filterType === 'confirmed' ? styles.activeFilter : null]}
-            onPress={() => handleFilterChange('confirmed')}
-          >
-            <Text style={[styles.filterButtonText, filterType === 'confirmed' ? styles.activeFilterText : null]}>
-              Completed
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterButton, filterType === 'canceled' ? styles.activeFilter : null]}
-            onPress={() => handleFilterChange('canceled')}
-          >
-            <Text style={[styles.filterButtonText, filterType === 'canceled' ? styles.activeFilterText : null]}>
-              Cancelled
-            </Text>
-          </TouchableOpacity>
-        </View>
+  <TouchableOpacity
+    style={[styles.filterButton, filterType === 'all' ? styles.activeFilter : null]} // Highlight 'All' button
+    onPress={() => handleFilterChange('all')}
+  >
+    <Text style={[styles.filterButtonText, filterType === 'all' ? styles.activeFilterText : null]}>
+      All
+    </Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={[styles.filterButton, filterType === 'confirmed' ? styles.activeFilter : null]} // Highlight 'Confirmed' button
+    onPress={() => handleFilterChange('confirmed')}
+  >
+    <Text style={[styles.filterButtonText, filterType === 'confirmed' ? styles.activeFilterText : null]}>
+      Confirmed
+    </Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={[styles.filterButton, filterType === 'canceled' ? styles.activeFilter : null]} // Highlight 'Canceled' button
+    onPress={() => handleFilterChange('canceled')}
+  >
+    <Text style={[styles.filterButtonText, filterType === 'canceled' ? styles.activeFilterText : null]}>
+      Canceled
+    </Text>
+  </TouchableOpacity>
+</View>
       </View>
 
       {/* Card List */}
@@ -274,7 +288,7 @@ const HistoryScreen = () => {
         <Modal
           transparent={true}
           visible={modalVisible}
-          animationType="slide"
+          animationType="none"
           onRequestClose={closeModal}
         >
           <View style={styles.modalBackground}>
@@ -508,7 +522,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
   modalContainer: {
     width: '80%',

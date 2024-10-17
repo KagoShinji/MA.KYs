@@ -233,14 +233,18 @@ const ReportsScreen = () => {
 
       <View style={styles.cardsContainer}>
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Total Sales</Text>
+          <Text style={styles.cardTitle}>
+            Total Sales {selectedMonth !== 'All' ? `for ${selectedMonth}` : ''}
+          </Text>
           <Text style={styles.cardValue}>₱{filteredTotalSales.toLocaleString()}</Text>
         </View>
       </View>
 
       {/* Bar Chart for Bookings by Package */}
       <View style={styles.chartContainer}>
-        <Text style={styles.sectionTitle}>Bookings by Package</Text>
+        <Text style={styles.sectionTitle}>
+          Bookings by Package {selectedMonth !== 'All' ? `for ${selectedMonth}` : ''}
+        </Text>
         <ScrollView horizontal>
           <BarChart
             data={bookingsBarChartData}
@@ -263,7 +267,9 @@ const ReportsScreen = () => {
 
       {/* Bar Chart for Sales by Package */}
       <View style={styles.chartContainer}>
-        <Text style={styles.sectionTitle}>Sales by Package</Text>
+        <Text style={styles.sectionTitle}>
+          Sales by Package {selectedMonth !== 'All' ? `for ${selectedMonth}` : ''}
+        </Text>
         <ScrollView horizontal>
           <BarChart
             data={salesBarChartData}
@@ -357,10 +363,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 6,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'black',
   },
   cardTitle: {
     fontSize: 16,
@@ -376,9 +384,13 @@ const styles = StyleSheet.create({
   chartContainer: {
     marginTop: 20,
     paddingVertical: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
     borderWidth: 1,
-    borderColor: '#000',
-    borderRadius: 10,
+    borderColor: 'black',
   },
   sectionTitle: {
     fontSize: 18,
